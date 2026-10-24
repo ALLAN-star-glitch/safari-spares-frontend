@@ -1,52 +1,97 @@
 // lib/constants.ts
 
 import {
-  Calendar,
-  BookOpen,
-  Zap,
-  CreditCard,
   Home,
-} from "lucide-react";
+  Search,
+  Store,
+  BookOpen,
+  Wrench,
+  type LucideIcon,
+} from 'lucide-react';
 
-export const SITE_NAME = "Nuruvent";
-export const SITE_DESCRIPTION = "Light Your Training Events. Illuminate Your Growth.";
-export const SITE_URL = "https://nuruvent.com";
+export const SITE_NAME = 'Safari Spares';
+export const SITE_DESCRIPTION =
+  'Verified Parts. Secure Escrow. Fast Delivery.';
+export const SITE_TAGLINE = 'Pata Part. Pata Pap. Pata Sasa.';
+export const SITE_URL = 'https://safarispares.com';
 
-export const NAV_ITEMS = [
-  { label: "Home", href: "/", icon: Home},
-  { label: "Events", href: "/events", icon: Calendar },
-  { label: "How It Works", href: "/how-it-works", icon: BookOpen },
-  { label: "Features", href: "/features", icon: Zap },
-  { label: "Pricing", href: "/pricing", icon: CreditCard },
-  { label: "Contact", href: "/contact", icon: BookOpen },
+export interface NavItem {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+}
+
+export const NAV_ITEMS: NavItem[] = [
+  { label: 'Home', href: '/', icon: Home },
+  { label: 'Browse Parts', href: '/search', icon: Search },
+  { label: 'Shops', href: '/shops', icon: Store },
+  { label: 'How It Works', href: '/how-it-works', icon: BookOpen },
+  { label: 'For Sellers', href: '/for-sellers', icon: Wrench },
 ];
 
 export const FOOTER_LINKS = {
-  platform: [
-    { label: "Events", href: "/events" },
-    { label: "How It Works", href: "/how-it-works" },
-    { label: "Features", href: "/features" },
-    { label: "Pricing", href: "/pricing" },
-    { label: "For Hosts", href: "/for-hosts" },
+  marketplace: [
+    { label: 'Browse Parts', href: '/search' },
+    { label: 'Verified Shops', href: '/shops' },
+    { label: 'How It Works', href: '/how-it-works' },
+    { label: 'For Sellers', href: '/for-sellers' },
   ],
-  resources: [
-    { label: "Help Center", href: "/help" },
-    { label: "Privacy Policy", href: "/privacy" },
-    { label: "Terms of Use", href: "/terms" },
+  company: [
+    { label: 'About', href: '/about' },
+    { label: 'Contact', href: '/contact' },
+    { label: 'Careers', href: '/careers' },
+  ],
+  legal: [
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Terms of Use', href: '/terms' },
+    { label: 'Cookie Policy', href: '/cookies' },
   ],
 };
 
 export const SOCIAL_LINKS = [
-  { label: "LinkedIn", href: "#" },
-  { label: "Twitter", href: "#" },
-  { label: "Instagram", href: "#" },
-  { label: "WhatsApp", href: "#" },
+  { label: 'Instagram', href: '#' },
+  { label: 'Twitter', href: '#' },
+  { label: 'LinkedIn', href: '#' },
+  { label: 'WhatsApp', href: '#' },
 ];
 
-export const EVENT_TYPES = [
-  { label: "All Events", value: "all" },
-  { label: "Workshops", value: "workshop" },
-  { label: "Webinars", value: "webinar" },
-  { label: "Bootcamps", value: "bootcamp" },
-  { label: "Meetups", value: "meetup" },
+// Categories for the marketplace — used by search filters and home feed
+export const PART_CATEGORIES = [
+  { label: 'Engine & Drivetrain', value: 'engine-drivetrain' },
+  { label: 'Brakes & Suspension', value: 'brakes-suspension' },
+  { label: 'Body & Exterior', value: 'body-exterior' },
+  { label: 'Electrical & Lighting', value: 'electrical-lighting' },
+  { label: 'Filters & Fluids', value: 'filters-fluids' },
+  { label: 'Tyres & Wheels', value: 'tyres-wheels' },
+  { label: 'Interior & Accessories', value: 'interior-accessories' },
+  { label: 'Tools & Equipment', value: 'tools-equipment' },
+];
+
+// Common vehicle makes in Kenya — for fitment filter
+export const VEHICLE_MAKES = [
+  'Toyota',
+  'Nissan',
+  'Subaru',
+  'Mazda',
+  'Mitsubishi',
+  'Honda',
+  'Suzuki',
+  'Isuzu',
+  'Ford',
+  'Volkswagen',
+  'Mercedes-Benz',
+  'BMW',
+];
+
+// Common counties for location filter
+export const KENYA_COUNTIES = [
+  'Nairobi',
+  'Mombasa',
+  'Kisumu',
+  'Nakuru',
+  'Eldoret',
+  'Thika',
+  'Machakos',
+  'Nyeri',
+  'Meru',
 ];

@@ -3,27 +3,25 @@
 import type { Theme } from './store/slices/themeSlice';
 
 /** localStorage key — must match themeSlice.ts. */
-export const THEME_STORAGE_KEY = 'nuruvent-theme';
+export const THEME_STORAGE_KEY = 'safari-spares-theme';
 
 /**
  * Inline script injected into <head>. Runs before React hydrates and
- * sets `.dark` on <html> if the stored/preferred theme is dark.
+ * sets `.dark` on <html>.
  *
- * Kept as a plain string so it can be dropped into a <script> tag
- * without any bundler processing — it has to execute *before* the
- * framework boots.
+ * Safari Spares is dark-first: the app is dark regardless of the user's
+ * OS preference. We keep the `.dark` class on <html> so shadcn/ui tokens
+ * resolve correctly, and to allow a future light mode override.
  *
  * Wrapped in try/catch because localStorage can throw in private mode.
  */
 export const THEME_INIT_SCRIPT = `
 (function(){
   try {
-    var stored = localStorage.getItem('${THEME_STORAGE_KEY}');
-    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var theme = stored || (prefersDark ? 'dark' : 'light');
     var root = document.documentElement;
-    if (theme === 'dark') root.classList.add('dark');
-    else root.classList.remove('dark');
+    root.classList.add('dark');
+    // Persist the theme so a future light-mode toggle can read it.
+    try { localStorage.setItem('${THEME_STORAGE_KEY}', 'dark'); } catch (e) {}
   } catch (e) {}
 })();
 `.trim();

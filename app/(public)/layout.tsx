@@ -1,53 +1,85 @@
-// app/(public)/layout.tsx
+// app/layout.tsx
 
-import type { Metadata } from 'next';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
-import Script from 'next/script';
+import type { Metadata, Viewport } from 'next';
+import { Inter, Sora } from 'next/font/google';
+import './globals.css';
+import { THEME_INIT_SCRIPT } from '@/lib/theme';
+import { Toaster } from 'sonner';
+import StoreProvider from '../StoreProvider';
+
+const sora = Sora({
+  variable: '--font-heading',
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
+});
+
+const inter = Inter({
+  variable: '--font-sans',
+  subsets: ['latin'],
+  display: 'swap',
+});
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#101214',
+};
+
+// Get the base URL dynamically (Vercel provides VERCEL_URL)
+const getBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return 'http://localhost:3000';
+};
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getBaseUrl()),
   title: {
-    default: 'Nuruvent — Training Events & Online Courses Platform',
-    template: '%s | Nuruvent',
+    default: 'Safari Spares — The Automotive Marketplace for Africa',
+    template: '%s | Safari Spares',
   },
-  description: 'The global platform connecting training providers and learners. Discover live training events, workshops, webinars, self-paced online courses, and earn certified qualifications.',
+  description:
+    'Verified Parts. Secure Escrow. Fast Delivery. The premium automotive marketplace connecting buyers, mechanics, and verified shops across Kenya and Africa.',
   keywords: [
-    'training events and courses',
-    'online courses platform',
-    'professional training',
-    'workshops',
-    'webinars',
-    'bootcamps',
-    'certified courses',
-    'CPD certificates',
-    'career development',
-    'professional growth',
-    'training platform',
-    'global training',
-    'Nuruvent',
-    'online learning',
-    'professional development',
+    'spare parts Africa',
+    'automotive marketplace Kenya',
+    'car parts Nairobi',
+    'verified spare parts shops',
+    'reserve for pickup',
+    'Safari Spares',
   ],
-  authors: [{ name: 'Nuruvent' }],
-  creator: 'Nuruvent',
-  publisher: 'Nuruvent',
+  authors: [{ name: 'Safari Spares' }],
+  creator: 'Safari Spares',
+  publisher: 'Safari Spares',
+  
   openGraph: {
-    title: 'Nuruvent — Training Events & Online Courses Platform',
-    description: 'The global platform connecting training providers and learners. Discover live training events, workshops, webinars, self-paced online courses, and earn certified qualifications.',
-    url: 'https://nuruvent.com',
-    siteName: 'Nuruvent',
+    title: 'Safari Spares — The Automotive Marketplace for Africa',
+    description:
+      'Verified Parts. Secure Escrow. Fast Delivery. Find verified spare parts from trusted shops across Kenya and Africa.',
+    url: '/', // Uses metadataBase automatically
+    siteName: 'Safari Spares',
+    images: [
+      {
+        url: '/hero.png',
+        width: 1200,
+        height: 630,
+        alt: 'Safari Spares - The Automotive Marketplace for Africa',
+      },
+    ],
+    locale: 'en_KE',
     type: 'website',
-    locale: 'en_US',
-    // REMOVED images: ['/hero-image.png'] from here
   },
+
   twitter: {
     card: 'summary_large_image',
-    title: 'Nuruvent — Training Events & Online Courses Platform',
-    description: 'The global platform connecting training providers and learners. Discover live training events, workshops, webinars, self-paced online courses, and earn certified qualifications.',
-    // REMOVED images: ['/hero-image.png'] from here
-    site: '@nuruvent',
-    creator: '@nuruvent',
+    title: 'Safari Spares — The Automotive Marketplace for Africa',
+    description:
+      'Verified Parts. Secure Escrow. Fast Delivery. Find verified spare parts from trusted shops across Kenya and Africa.',
+    images: ['/hero.png'],
+    // site: '@safarispares', // Uncomment when you have a handle
   },
+
   robots: {
     index: true,
     follow: true,
@@ -60,132 +92,36 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: 'https://nuruvent.com',
+    canonical: '/',
   },
-  verification: {
-    google: 'your-google-verification-code',
-  },
-  category: 'education',
+  category: 'automotive',
+  icons: { apple: '/icon-192.png' },
 };
 
-export default function PublicLayout({
+export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Header reads auth state from Redux automatically */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
-        <Header />
-      </header>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body
+        className={`${sora.variable} ${inter.variable} font-sans antialiased min-h-screen flex flex-col bg-background text-foreground`}
+      >
+        <StoreProvider>{children}</StoreProvider>
 
-      {/* Main Content Area */}
-      <main className="flex-1">{children}</main>
-
-      {/* Public Footer */}
-      <Footer />
-
-     {/* Tawk.to Chat Widget */}
-<Script
-  id="tawk-to"
-  strategy="afterInteractive"
-  dangerouslySetInnerHTML={{
-    __html: `
-      var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
-
-      if (typeof window !== 'undefined' && window.Tawk_API && window.Tawk_API.showWidget) {
-        window.Tawk_API.showWidget();
-      }
-
-      (function() {
-        if (document.getElementById('tawk-script-loader')) return;
-        var s1 = document.createElement('script'), s0 = document.getElementsByTagName('script')[0];
-        s1.id = 'tawk-script-loader';
-        s1.async = true;
-        s1.src = 'https://embed.tawk.to/6a6afad8d285f11d460611a5/1juou7nou';
-        s1.charset = 'UTF-8';
-        s1.setAttribute('crossorigin', '*');
-        s0.parentNode.insertBefore(s1, s0);
-      })();
-
-      if (typeof window !== 'undefined') {
-        // Paths where the chat widget should stay hidden.
-        var HIDDEN_PATHS = ['/dashboard', '/events/', '/meeting/', '/checkout/', '/profile', '/accounts'];
-
-        var syncTawkVisibility = function() {
-          var path = window.location.pathname;
-          var shouldHide = HIDDEN_PATHS.some(function(p) {
-            return path === p || path.indexOf(p) === 0;
-          });
-
-          if (!window.Tawk_API) return;
-
-          if (shouldHide) {
-            if (window.Tawk_API.hideWidget) window.Tawk_API.hideWidget();
-          } else {
-            if (window.Tawk_API.showWidget) window.Tawk_API.showWidget();
-          }
-        };
-
-        // Run once on load (Tawk may still be initializing — retry briefly)
-        syncTawkVisibility();
-        var retries = 0;
-        var retryTimer = setInterval(function() {
-          syncTawkVisibility();
-          retries += 1;
-          if (retries >= 20 || (window.Tawk_API && window.Tawk_API.hideWidget)) {
-            clearInterval(retryTimer);
-          }
-        }, 250);
-
-        // Hook into client-side navigations
-        var originalPushState = history.pushState;
-        history.pushState = function() {
-          originalPushState.apply(this, arguments);
-          setTimeout(syncTawkVisibility, 100);
-        };
-
-        var originalReplaceState = history.replaceState;
-        history.replaceState = function() {
-          originalReplaceState.apply(this, arguments);
-          setTimeout(syncTawkVisibility, 100);
-        };
-
-        window.addEventListener('popstate', syncTawkVisibility);
-      }
-    `,
-  }}
-/>
-
-      {/* JSON-LD Structured Data */}
-      <Script
-        id="structured-data"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'EducationalOrganization',
-            name: 'Nuruvent',
-            description: 'The global platform connecting training providers and learners for live events, workshops, and self-paced online courses.',
-            url: 'https://nuruvent.com',
-            logo: 'https://nuruvent.com/logo.png',
-            sameAs: [
-              'https://twitter.com/nuruvent',
-              'https://linkedin.com/company/nuruvent',
-              'https://facebook.com/nuruvent',
-              'https://instagram.com/nuruvent',
-            ],
-            contactPoint: {
-              '@type': 'ContactPoint',
-              email: 'info@nuruvent.com',
-              contactType: 'customer support',
-              availableLanguage: ['English'],
-            },
-          }),
-        }}
-      />
-    </div>
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton
+          expand={false}
+          duration={4000}
+          visibleToasts={3}
+          theme="dark"
+          toastOptions={{ classNames: { toast: 'font-sans' } }}
+        />
+      </body>
+    </html>
   );
 }

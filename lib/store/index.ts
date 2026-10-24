@@ -29,7 +29,6 @@ import './api/authApi';
 import './api/accountsApi';
 import './api/teamsApi';
 import './api/profileApi';
-import './api/eventsApi';
 import './api/attendanceApi';  
 import './api/registrationsApi';
 import './api/paymentsApi';

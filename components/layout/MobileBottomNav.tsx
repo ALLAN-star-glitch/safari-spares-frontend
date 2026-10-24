@@ -2,524 +2,57 @@
 
 'use client';
 
-import { useState, MouseEvent, useMemo } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname, useParams } from 'next/navigation';
-import {
-  LayoutDashboard,
-  Calendar,
-  Ticket,
-  MoreHorizontal,
-  ClipboardList,
-  Users,
-  CreditCard,
-  Award,
-  Clapperboard,
-  Trash2,
-  Settings,
-  User,
-  Building2,
-  Layers,
-  ChevronRight,
-  LogOut,
-  type LucideIcon,
-} from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Home, Search, MessageSquare, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
-import { useLogoutMutation } from '@/lib/store/api/authApi';
-import { clearAuth } from '@/lib/store/slices/authSlice';
-import { clearWorkspace } from '@/lib/store/slices/workspaceSlice';
-import { useGetMyMembershipQuery } from '@/lib/store/api/accountsApi';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
-import { LogoutDialog } from '@/components/ui/LogoutDialog';
-import type { AccountRole } from '@/lib/types/account';
 
-// ============================================================
-// TYPES & CONSTANTS
-// ============================================================
-
-interface PrimaryNavItem {
-  key: 'dashboard' | 'events' | 'tickets';
-  label: string;
-  icon: LucideIcon;
-  segment: string;
-}
-
-interface MoreNavItem {
-  key: string;
-  label: string;
-  icon: LucideIcon;
-  href?: string;
-  segment?: string;
-  isTrash?: boolean;
-  section?: 'workspace' | 'account';
-  organizersOnly?: boolean;
-  adminsOnly?: boolean;
-  disabled?: boolean;
-}
-
-const PRIMARY_ITEMS: PrimaryNavItem[] = [
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, segment: '' },
-  { key: 'events', label: 'Team Events', icon: Calendar, segment: 'events' },
-  { key: 'tickets', label: 'My Tickets', icon: Ticket, segment: 'tickets' },
+const NAV_ITEMS = [
+  { label: 'Home', href: '/', icon: Home },
+  { label: 'Explore', href: '/search', icon: Search },
+  { label: 'Messages', href: '/messages', icon: MessageSquare },
+  { label: 'Profile', href: '/profile', icon: User },
 ];
 
-// ============================================================
-// COMPONENT
-// ============================================================
-
 export function MobileBottomNav() {
-  const router = useRouter();
   const pathname = usePathname();
-  const params = useParams<{ accountId?: string; teamId?: string }>();
 
-  const urlAccountId = params?.accountId ?? null;
-  const urlTeamId = params?.teamId ?? null;
-
-  const workspaceAccountId = useAppSelector((s) => s.workspace.activeAccountId);
-  const workspaceTeamId = useAppSelector((s) => s.workspace.activeTeamId);
-
-  const accountId = urlAccountId ?? workspaceAccountId ?? null;
-  const teamId = urlTeamId ?? workspaceTeamId ?? null;
-
-  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
-
-  const dispatch = useAppDispatch();
-  const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
-
-  const [isMoreOpen, setIsMoreOpen] = useState(false);
-
-  const { data: myMembership } = useGetMyMembershipQuery(
-    accountId ?? '',
-    { skip: !accountId },
-  );
-
-  const isAdmin = useMemo(() => {
-    const role = myMembership?.role as AccountRole | undefined;
-    return role === 'account_admin';
-  }, [myMembership]);
-
-  const isOrganizer = useMemo(() => {
-    const role = myMembership?.role as AccountRole | undefined;
-    return role === 'account_admin' || role === 'trainer';
-  }, [myMembership]);
-
-  if (!isAuthenticated) return null;
-
-  const teamBase =
-    accountId && teamId ? `/dashboard/${accountId}/${teamId}` : null;
-
-  // ------------------------------------------------------------
-  // DYNAMIC ROUTING FOR MORE ITEMS
-  // ------------------------------------------------------------
-  const getMoreItemHref = (item: MoreNavItem) => {
-    // 1. Certificates: Learners go to their own, Admins/Organizers go to account management
-    if (item.key === 'certificates') {
-      if (isOrganizer) {
-        return accountId ? `/dashboard/${accountId}/certificates` : '/accounts';
-      }
-      return '/me/certificates';
-    }
-
-    // 2. Templates: Account level (organizers/admins only)
-    if (item.key === 'templates') {
-      return accountId ? `/dashboard/${accountId}/certificates/templates` : '/accounts';
-    }
-
-    // 3. Standard routing
-    if (item.href) return item.href;
-    if (!item.segment) return '/accounts';
-    if (!teamBase) return '/accounts';
-    return item.segment === '' ? teamBase : `${teamBase}/${item.segment}`;
-  };
-
-  const allMoreItems: MoreNavItem[] = [
-    // Team-scoped items
-    {
-      key: 'registrations',
-      label: 'Registrations',
-      icon: ClipboardList,
-      segment: 'registrations',
-      section: 'workspace',
-      organizersOnly: true,
-    },
-    {
-      key: 'attendees',
-      label: 'Attendees',
-      icon: Users,
-      segment: 'attendees',
-      section: 'workspace',
-      organizersOnly: true,
-    },
-    {
-      key: 'payments',
-      label: 'Payments',
-      icon: CreditCard,
-      segment: 'payments',
-      section: 'workspace',
-      adminsOnly: true,
-    },
-    {
-      key: 'certificates',
-      label: 'Certificates',
-      icon: Award,
-      segment: 'certificates',
-      section: 'workspace',
-    },
-    {
-      key: 'templates',
-      label: 'Templates',
-      icon: Award,
-      segment: 'certificates/templates',
-      section: 'workspace',
-      organizersOnly: true,
-    },
-    {
-      key: 'replays',
-      label: 'Replays',
-      icon: Clapperboard,
-      segment: 'replays',
-      section: 'workspace',
-      disabled: true,
-    },
-    {
-      key: 'trash',
-      label: 'Trash',
-      icon: Trash2,
-      segment: 'trash',
-      isTrash: true,
-      section: 'workspace',
-      organizersOnly: true,
-    },
-
-    // Account-scoped items
-    {
-      key: 'workspaces',
-      label: 'My Workspaces',
-      icon: Layers,
-      href: '/accounts',
-      section: 'account',
-    },
-    {
-      key: 'teams',
-      label: 'Teams',
-      icon: Building2,
-      href: '/accounts',
-      section: 'account',
-    },
-    {
-      key: 'settings',
-      label: 'Account Settings',
-      icon: Settings,
-      href: accountId ? `/dashboard/${accountId}/settings` : '/accounts',
-      section: 'account',
-    },
-    {
-      key: 'profile',
-      label: 'My Profile',
-      icon: User,
-      href: '/profile',
-      section: 'account',
-    },
-  ];
-
-  const moreItems = allMoreItems.filter((item) => {
-    if (item.adminsOnly) return isAdmin;
-    if (item.organizersOnly) return isOrganizer;
-    return true;
-  });
-
-  const isActive = (item: MoreNavItem) => {
-    if (item.disabled) return false;
-    const href = getMoreItemHref(item);
-    
-    // Match exactly if it's a custom/account-level route
-    if (item.key === 'certificates' && isOrganizer) {
-      return pathname === href;
-    }
-    if (item.key === 'templates') {
-      return pathname === href || pathname.startsWith(`${href}/`);
-    }
-    if (item.href) {
-      return pathname === href || pathname.startsWith(`${href}/`);
-    }
-    if (!teamBase || item.segment === undefined) return false;
-    if (item.segment === '') return pathname === teamBase;
-    const scoped = `${teamBase}/${item.segment}`;
-    return pathname === scoped || pathname.startsWith(`${scoped}/`);
-  };
-
-  const isMoreActive =
-    moreItems.some((item) => isActive(item)) ||
-    pathname.startsWith('/profile') ||
-    (accountId ? pathname.startsWith(`/dashboard/${accountId}/settings`) : false);
-
-  const isPrimaryActive = (segment: string) => {
-    if (!teamBase) return false;
-    if (segment === '') return pathname === teamBase;
-    const href = `${teamBase}/${segment}`;
-    return pathname === href || pathname.startsWith(`${href}/`);
-  };
-
-  const workspaceItems = moreItems.filter((i) => i.section === 'workspace');
-  const accountItems = moreItems.filter((i) => i.section === 'account');
-
-  const handleLogoutConfirm = async () => {
-    try {
-      await logout().unwrap();
-    } catch (err) {
-      console.error('Logout failed:', err);
-    } finally {
-      dispatch(clearAuth());
-      dispatch(clearWorkspace());
-      setIsMoreOpen(false);
-      router.push('/');
-    }
-  };
-
-  const openLogoutDialog = (e: MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    setIsMoreOpen(false);
-    setShowLogoutDialog(true);
-  };
+  // Hide on auth pages
+  if (pathname?.startsWith('/signin') || pathname?.startsWith('/signup')) {
+    return null;
+  }
 
   return (
-    <>
-      {/* Flush Edge-to-Edge Bottom Navigation */}
-      <nav
-        aria-label="Bottom navigation"
-        className={cn(
-          'md:hidden',
-          'fixed inset-x-0 bottom-0 z-40',
-          'border-t border-border/80 bg-background/95 backdrop-blur-xl',
-          'shadow-[0_-4px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]',
-          'pb-[env(safe-area-inset-bottom)] transition-all duration-300'
-        )}
-      >
-        <ul className="mx-auto flex max-w-md items-center justify-around px-2 py-1">
-          {PRIMARY_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const active = isPrimaryActive(item.segment);
-            return (
-              <li key={item.key} className="flex-1">
-                <Link
-                  href={
-                    teamBase
-                      ? item.segment === ''
-                        ? teamBase
-                        : `${teamBase}/${item.segment}`
-                      : '/accounts'
-                  }
-                  prefetch={false}
-                  aria-current={active ? 'page' : undefined}
-                  className={cn(
-                    'relative flex flex-col items-center justify-center gap-1 rounded-lg py-2 px-1',
-                    'select-none transition-all duration-200 ease-out active:scale-95',
-                    active
-                      ? 'text-primary font-medium'
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  {active && (
-                    <span className="absolute inset-x-1 inset-y-0.5 rounded-lg bg-primary/10 transition-all duration-300" />
-                  )}
-
-                  <Icon
-                    className={cn(
-                      'relative h-5 w-5 transition-transform duration-200',
-                      active ? 'scale-110 text-primary stroke-[2.25px]' : 'stroke-[1.75px]'
-                    )}
-                  />
-                  <span className="relative text-[10px] tracking-tight leading-none">
-                    {item.label}
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-
-          {/* More Action Sheet Button */}
-          <li className="flex-1">
-            <button
-              type="button"
-              onClick={() => setIsMoreOpen(true)}
-              aria-haspopup="dialog"
-              aria-expanded={isMoreOpen}
-              className={cn(
-                'relative flex w-full flex-col items-center justify-center gap-1 rounded-lg py-2 px-1',
-                'select-none transition-all duration-200 ease-out active:scale-95',
-                isMoreActive
-                  ? 'text-primary font-medium'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
+    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-subtle bg-charcoal/95 backdrop-blur-xl pb-safe lg:hidden">
+      <nav className="flex items-center justify-around px-2">
+        {NAV_ITEMS.map((item) => {
+          const isActive = pathname === item.href;
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className="flex flex-col items-center justify-center gap-1 w-16 py-3"
             >
-              {isMoreActive && (
-                <span className="absolute inset-x-1 inset-y-0.5 rounded-lg bg-primary/10 transition-all duration-300" />
-              )}
-
-              <MoreHorizontal
+              <Icon
                 className={cn(
-                  'relative h-5 w-5 transition-transform duration-200',
-                  isMoreActive ? 'scale-110 text-primary stroke-[2.25px]' : 'stroke-[1.75px]'
+                  'h-5 w-5 transition-colors',
+                  isActive ? 'text-primary' : 'text-text-muted'
                 )}
+                strokeWidth={isActive ? 2.5 : 2}
               />
-              <span className="relative text-[10px] tracking-tight leading-none">
-                More
+              <span
+                className={cn(
+                  'text-[10px] font-medium transition-colors',
+                  isActive ? 'text-primary' : 'text-text-muted'
+                )}
+              >
+                {item.label}
               </span>
-            </button>
-          </li>
-        </ul>
+            </Link>
+          );
+        })}
       </nav>
-
-      {/* Dynamic Slide-Up Sheet */}
-      <Sheet open={isMoreOpen} onOpenChange={setIsMoreOpen}>
-        <SheetContent
-          side="bottom"
-          className={cn(
-            'z-50 rounded-t-[24px] border-t border-border/60 bg-background/95 backdrop-blur-2xl px-0 pb-0',
-            'shadow-2xl'
-          )}
-          showCloseButton={false}
-        >
-          {/* Grab Handle */}
-          <div className="flex justify-center pt-3 pb-1">
-            <div className="h-1.5 w-12 rounded-full bg-muted-foreground/20" />
-          </div>
-
-          <SheetHeader className="border-b border-border/50 px-6 py-3 text-left">
-            <SheetTitle className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/80">
-              Navigation
-            </SheetTitle>
-          </SheetHeader>
-
-          <div className="max-h-[72vh] overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-3 space-y-4">
-            {/* Workspace Group */}
-            <div>
-              <div className="px-3 pb-1.5 text-[11px] font-semibold text-muted-foreground/60 uppercase tracking-wider">
-                Workspace
-              </div>
-              <ul className="space-y-1">
-                {workspaceItems.map((item) => renderSheetItem(item))}
-              </ul>
-            </div>
-
-            <hr className="border-border/40 my-2" />
-
-            {/* Account Group */}
-            <div>
-              <div className="px-3 pb-1.5 text-[11px] font-semibold text-muted-foreground/60 uppercase tracking-wider">
-                Account & Settings
-              </div>
-              <ul className="space-y-1">
-                {accountItems.map((item) => renderSheetItem(item))}
-              </ul>
-            </div>
-
-            <hr className="border-border/40 my-2" />
-
-            {/* Log out */}
-            <ul className="space-y-1 pb-1">
-              <li>
-                <button
-                  type="button"
-                  onClick={openLogoutDialog}
-                  disabled={isLoggingOut}
-                  className={cn(
-                    'group flex w-full items-center justify-between rounded-xl px-3.5 py-3 transition-all duration-150',
-                    'text-destructive hover:bg-destructive/10 active:bg-destructive/15',
-                    isLoggingOut && 'opacity-60 cursor-not-allowed'
-                  )}
-                >
-                  <div className="flex items-center gap-3.5">
-                    <LogOut className="h-5 w-5 shrink-0 text-destructive transition-transform duration-200 group-hover:scale-105" />
-                    <span className="text-sm font-medium">
-                      {isLoggingOut ? 'Logging out…' : 'Log Out'}
-                    </span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-destructive opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0.5" />
-                </button>
-              </li>
-            </ul>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      <LogoutDialog
-        open={showLogoutDialog}
-        onOpenChange={setShowLogoutDialog}
-        onConfirm={handleLogoutConfirm}
-        isLoading={isLoggingOut}
-      />
-    </>
+    </div>
   );
-
-  function renderSheetItem(item: MoreNavItem) {
-    const Icon = item.icon;
-    const active = isActive(item);
-    const isTrash = item.isTrash;
-
-    // 🚨 Disabled Item Renderer
-    if (item.disabled) {
-      return (
-        <li key={item.key}>
-          <div className="flex w-full items-center justify-between rounded-xl px-3.5 py-3 text-foreground/40 opacity-50 cursor-not-allowed">
-            <div className="flex items-center gap-3.5">
-              <Icon className="h-5 w-5 shrink-0" />
-              <span className="text-sm flex-1">{item.label}</span>
-            </div>
-            <span className="text-[10px] uppercase font-bold tracking-wider bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
-              Soon
-            </span>
-          </div>
-        </li>
-      );
-    }
-
-    return (
-      <li key={item.key}>
-        <Link
-          href={getMoreItemHref(item)}
-          prefetch={false}
-          onClick={() => setIsMoreOpen(false)}
-          aria-current={active ? 'page' : undefined}
-          className={cn(
-            'group flex items-center justify-between rounded-xl px-3.5 py-3 transition-all duration-150',
-            active
-              ? isTrash
-                ? 'bg-destructive/10 text-destructive font-semibold'
-                : 'bg-primary/10 text-primary font-semibold'
-              : isTrash
-                ? 'text-destructive hover:bg-destructive/10'
-                : 'text-foreground hover:bg-muted/60 active:bg-muted'
-          )}
-        >
-          <div className="flex items-center gap-3.5">
-            <Icon
-              className={cn(
-                'h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-105',
-                isTrash
-                  ? 'text-destructive'
-                  : active
-                    ? 'text-primary stroke-[2.25px]'
-                    : 'text-muted-foreground'
-              )}
-            />
-            <span className="text-sm">{item.label}</span>
-          </div>
-          <ChevronRight
-            className={cn(
-              'h-4 w-4 opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0.5',
-              active ? 'opacity-100 text-primary' : 'text-muted-foreground'
-            )}
-          />
-        </Link>
-      </li>
-    );
-  }
 }
