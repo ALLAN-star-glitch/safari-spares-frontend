@@ -1,0 +1,96 @@
+// app/(public)/events/[slug]/page.tsx
+
+import type { Metadata } from 'next';
+import { fetchEventBySlug, toOgImage } from '@/lib/server/events';
+import { EventDetailClient } from './_components/EventDetailClient';
+
+const PUBLIC_SITE_URL =
+  process.env.NEXT_PUBLIC_PUBLIC_SITE_URL || 'https://www.nuruvent.com';
+
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
+
+// ============================================================
+// METADATA
+// ============================================================
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const event = await fetchEventBySlug(slug);
+
+  if (!event) {
+    return {
+      title: 'Event not found | Nuruvent',
+      description: 'The requested event could not be found.',
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const title = event.display_name || event.name || 'Event';
+  const description =
+    event.short_description?.trim() ||
+    event.description?.trim()?.slice(0, 200) ||
+    `Join ${title} on Nuruvent.`;
+
+  const ogImage = toOgImage(event, PUBLIC_SITE_URL);
+  
+  // Cache Buster — ensures social platforms re-scrape when image changes
+  const cacheBuster = event.updated_at 
+    ? new Date(event.updated_at).getTime() 
+    : Date.now();
+    
+  const ogImageWithCacheBust = `${ogImage}${ogImage.includes('?') ? '&' : '?'}v=${cacheBuster}`;
+
+  const canonicalUrl = `${PUBLIC_SITE_URL}/events/${slug}`;
+
+  return {
+    title,
+    description,
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true },
+    },
+    alternates: { canonical: canonicalUrl },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: 'Nuruvent',
+      type: 'website',
+      images: [{ 
+        url: ogImageWithCacheBust, 
+        width: 1200, 
+        height: 630, 
+        alt: title 
+      }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImageWithCacheBust],
+    },
+    other: {
+      'og:image:width': '1200',
+      'og:image:height': '630',
+    }
+  };
+}
+
+// ============================================================
+// PAGE
+// ============================================================
+
+export default async function EventDetailPage({ params }: PageProps) {
+  const { slug } = await params;
+  
+  // Fetch the event on the server
+  const event = await fetchEventBySlug(slug);
+
+  // Pass the event directly to the client component as initial data
+  return <EventDetailClient slug={slug} initialEvent={event} />;
+}
