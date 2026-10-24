@@ -61,18 +61,19 @@ export function MainHeader() {
           : 'bg-gradient-to-b from-charcoal/90 via-charcoal/50 to-transparent border-b border-transparent',
       )}
     >
-      <div className="container mx-auto px-3 sm:px-4">
+      <div className="container mx-auto px-2 sm:px-4">
         <div className="flex flex-col">
           {/* Top Row */}
-          <div className="flex items-center justify-between h-14 sm:h-16 md:h-[72px] gap-2">
+          <div className="flex items-center justify-between h-14 sm:h-16 md:h-[72px] gap-1 sm:gap-2 min-w-0">
+            
             {/* Left: Mobile Menu + Logo */}
-            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <div className="flex items-center gap-0.5 sm:gap-2 shrink-0">
               <Sheet>
                 <SheetTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="lg:hidden text-text-secondary hover:text-text-primary hover:bg-charcoal-higher rounded-full h-10 w-10 transition-colors focus-visible:ring-1 focus-visible:ring-primary"
+                    className="lg:hidden text-text-secondary hover:text-text-primary hover:bg-charcoal-higher rounded-full h-9 w-9 sm:h-10 sm:w-10 transition-colors focus-visible:ring-1 focus-visible:ring-primary"
                     aria-label="Open navigation menu"
                   >
                     <Menu className="h-5 w-5" />
@@ -134,8 +135,8 @@ export function MainHeader() {
                 </SheetContent>
               </Sheet>
 
-              <Link href="/" className="flex items-center focus-visible:outline-none">
-                <Logo width={100} className="sm:w-[110px]" />
+              <Link href="/" className="flex items-center shrink-0 focus-visible:outline-none">
+                <Logo width={85} className="xs:w-[100px] sm:w-[110px]" />
               </Link>
             </div>
 
@@ -150,7 +151,7 @@ export function MainHeader() {
             {/* Right: Actions */}
             <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               {/* Mobile: Location Picker Toggle */}
-              <div className="md:hidden flex items-center">
+              <div className="md:hidden flex items-center shrink-0">
                 <LocationPicker />
               </div>
 
@@ -158,14 +159,14 @@ export function MainHeader() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden text-text-secondary hover:text-text-primary hover:bg-charcoal-higher rounded-full h-10 w-10 transition-colors"
+                className="md:hidden text-text-secondary hover:text-text-primary hover:bg-charcoal-higher rounded-full h-8 w-8 sm:h-9 sm:w-9 transition-colors shrink-0"
                 onClick={handleSearchToggle}
                 aria-label={isSearchOpen ? 'Close search' : 'Open search'}
               >
                 {isSearchOpen ? (
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4 sm:h-5 sm:w-5" />
                 ) : (
-                  <Search className="h-5 w-5" />
+                  <Search className="h-4 w-4 sm:h-5 sm:w-5" />
                 )}
               </Button>
 
@@ -189,11 +190,11 @@ export function MainHeader() {
                 </Button>
               </Link>
 
-              {/* Mobile Sign In Accent Button */}
-              <Link href="/signin" className="sm:hidden">
+              {/* Mobile Sign In Button (Always rendered on mobile screens) */}
+              <Link href="/signin" className="sm:hidden shrink-0">
                 <Button
                   size="sm"
-                  className="bg-primary hover:bg-primary-600 text-primary-foreground font-semibold rounded-full px-3 h-8 text-xs"
+                  className="bg-primary hover:bg-primary-600 text-primary-foreground font-semibold rounded-full px-2.5 h-8 text-xs"
                 >
                   Sign In
                 </Button>
@@ -217,7 +218,7 @@ export function MainHeader() {
         </div>
       </div>
 
-      {/* Category strip — desktop only, always visible */}
+      {/* Category strip — desktop only */}
       <CategoryStrip />
     </header>
   );
