@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Safari Spares Frontend
 
-## Getting Started
+The premium automotive marketplace for Africa. Built with Next.js 16, React 19, Tailwind CSS v4, and RTK Query.
 
-First, run the development server:
+## Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Install dependencies
+pnpm install
+
+# Start the development server
 pnpm dev
-# or
-bun dev
-```
+Open http://localhost:3000 to view the app.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Environment Variables
+Create a .env.local file in the root directory:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+env
+# Backend API URL (Go backend)
+NEXT_PUBLIC_API_URL=http://localhost:8080
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# App URL (used for OG metadata)
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+For Vercel deployment, set NEXT_PUBLIC_API_URL in the Vercel Dashboard to your Render backend URL (e.g., https://safari-spares-backend-43rr.onrender.com).
 
-## Learn More
+Tech Stack
+Layer	Technology
+Framework	Next.js 16 (App Router)
+UI	React 19 + Tailwind CSS v4 + shadcn/ui
+State	Redux Toolkit + RTK Query
+Icons	Lucide React
+Forms	React Hook Form + Zod
+Notifications	Sonner
+Fonts	Sora (headings), Inter (body)
+Project Structure
+text
+app/
+├── (public)/               # Public marketplace pages
+│   ├── page.tsx            # Homepage (hero, categories, listings)
+│   ├── layout.tsx          # Public layout (Header + Footer + MobileNav)
+│   ├── signin/             # Sign in (phone + OTP)
+│   └── signup/             # Sign up
+├── layout.tsx              # Root layout (fonts, providers, theme)
+└── globals.css             # Design tokens (Safari Spares palette)
+components/
+├── home/                   # HeroSection, ActionCards
+├── layout/                 # Header, MainHeader, Footer, LocationPicker, CategoryStrip
+├── marketplace/            # ListingCard, ShopCard, MechanicCard
+└── ui/                     # shadcn primitives
+lib/
+├── constants.ts            # Nav items, categories, counties
+├── theme.ts                # Dark-mode init script
+└── store/                  # RTK store + API slices
+Design System
+Safari Spares uses a Premium Dark Mode aesthetic inspired by fintech apps (Revolut, Monzo) combined with the ruggedness of the automotive world.
 
-To learn more about Next.js, take a look at the following resources:
+Colors
+Role	Hex
+Background	#101214 (Deep Charcoal)
+Cards	#1A1D21 (Elevated Charcoal)
+Primary	#14B87A (Safari Green)
+Secondary	#E8A33D (Spares Gold)
+Error	#F26B6B (Alert Red)
+Text Primary	#F2F2F2 (Off-White)
+Text Secondary	#9AA0A6 (Cool Grey)
+Typography
+Headings: Sora (geometric, bold)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Body: Inter (readable)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Numbers / Prices: Inter with tabular-nums
 
-## Deploy on Vercel
+Deploy on Vercel
+Push to GitHub.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Import the repo on Vercel.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Vercel auto-detects Next.js.
+
+Set NEXT_PUBLIC_API_URL in Settings → Environment Variables:
+
+text
+NEXT_PUBLIC_API_URL=https://safari-spares-backend-43rr.onrender.com
+Deploy.
+
+Related Repositories
+Backend: safari-spares-backend — Go + Echo + PostgreSQL
+
+Documentation
+Concept Note
+
+Product BRD
+
+Backend BRD
+
+Backend Architecture
+
+Brand Guidelines
+
+text
+
+## Verify
+
+```bash
+cat README.md
