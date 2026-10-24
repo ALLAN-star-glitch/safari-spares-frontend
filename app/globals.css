@@ -307,3 +307,8 @@ textarea:disabled {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Safe area for mobile bottom nav */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}

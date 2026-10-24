@@ -57,10 +57,11 @@ export function MainHeader() {
           : 'bg-gradient-to-b from-charcoal/80 via-charcoal/40 to-transparent border-b border-transparent',
       )}
     >
-      <div className="container mx-auto px-3 sm:px-4">
+      {/* Increased mobile horizontal padding */}
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="flex flex-col">
           {/* Top Row */}
-          <div className="flex items-center justify-between h-16 sm:h-[72px] gap-2">
+          <div className="flex items-center justify-between h-16 sm:h-[72px] gap-3">
             {/* Left: Mobile Menu + Logo */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <Sheet>
