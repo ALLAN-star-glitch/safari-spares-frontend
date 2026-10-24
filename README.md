@@ -32,25 +32,6 @@ Icons	Lucide React
 Forms	React Hook Form + Zod
 Notifications	Sonner
 Fonts	Sora (headings), Inter (body)
-Project Structure
-text
-app/
-├── (public)/               # Public marketplace pages
-│   ├── page.tsx            # Homepage (hero, categories, listings)
-│   ├── layout.tsx          # Public layout (Header + Footer + MobileNav)
-│   ├── signin/             # Sign in (phone + OTP)
-│   └── signup/             # Sign up
-├── layout.tsx              # Root layout (fonts, providers, theme)
-└── globals.css             # Design tokens (Safari Spares palette)
-components/
-├── home/                   # HeroSection, ActionCards
-├── layout/                 # Header, MainHeader, Footer, LocationPicker, CategoryStrip
-├── marketplace/            # ListingCard, ShopCard, MechanicCard
-└── ui/                     # shadcn primitives
-lib/
-├── constants.ts            # Nav items, categories, counties
-├── theme.ts                # Dark-mode init script
-└── store/                  # RTK store + API slices
 Design System
 Safari Spares uses a Premium Dark Mode aesthetic inspired by fintech apps (Revolut, Monzo) combined with the ruggedness of the automotive world.
 
@@ -97,9 +78,3 @@ Backend Architecture
 
 Brand Guidelines
 
-text
-
-## Verify
-
-```bash
-cat README.md
