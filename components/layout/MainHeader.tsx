@@ -87,8 +87,6 @@ export function MainHeader() {
                   </SheetHeader>
 
                   <div className="p-4 flex-1 overflow-y-auto space-y-6">
-                  
-
                     {/* Categories */}
                     <div>
                       <p className="px-3 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
@@ -144,6 +142,13 @@ export function MainHeader() {
 
             {/* Right: Actions */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              
+              {/* Mobile: Location Icon */}
+              <div className="md:hidden">
+                <LocationPicker />
+              </div>
+
+              {/* Mobile: Search Toggle */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -188,20 +193,17 @@ export function MainHeader() {
             </div>
           </div>
 
-          {/* Mobile search dropdown (Now includes Location) */}
+          {/* Mobile search dropdown (Search only, triggered by Search icon) */}
           <div
             className={cn(
               'md:hidden transition-all duration-300 ease-in-out relative z-20 overflow-hidden',
               isSearchOpen
-                ? 'max-h-24 pb-3 opacity-100'
+                ? 'max-h-16 pb-3 opacity-100'
                 : 'max-h-0 opacity-0',
             )}
           >
-            <div className="flex items-center gap-2 pt-1">
-              <LocationPicker />
-              <div className="flex-1">
-                <SearchBar autoFocus={shouldAutoFocus} />
-              </div>
+            <div className="pt-1">
+              <SearchBar autoFocus={shouldAutoFocus} />
             </div>
           </div>
         </div>
