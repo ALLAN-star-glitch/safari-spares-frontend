@@ -1,5 +1,3 @@
-// components/layout/MainHeader.tsx
-
 'use client';
 
 import Link from 'next/link';
@@ -35,6 +33,12 @@ export function MainHeader() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Close search drawer when route changes
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsSearchOpen(false);
+  }, [pathname]);
+
   if (pathname?.startsWith('/signin') || pathname?.startsWith('/signup')) {
     return null;
   }
@@ -51,25 +55,24 @@ export function MainHeader() {
   return (
     <header
       className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+        'fixed top-0 left-0 right-0 z-50 transition-all duration-300 select-none',
         scrolled
-          ? 'bg-charcoal/95 backdrop-blur-xl border-b border-border-subtle'
-          : 'bg-gradient-to-b from-charcoal/80 via-charcoal/40 to-transparent border-b border-transparent',
+          ? 'bg-charcoal/95 backdrop-blur-xl border-b border-border-subtle shadow-md'
+          : 'bg-gradient-to-b from-charcoal/90 via-charcoal/50 to-transparent border-b border-transparent',
       )}
     >
-      {/* Increased mobile horizontal padding */}
-      <div className="container mx-auto px-4 sm:px-6">
+      <div className="container mx-auto px-3 sm:px-4">
         <div className="flex flex-col">
           {/* Top Row */}
-          <div className="flex items-center justify-between h-16 sm:h-[72px] gap-3">
+          <div className="flex items-center justify-between h-14 sm:h-16 md:h-[72px] gap-2">
             {/* Left: Mobile Menu + Logo */}
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               <Sheet>
                 <SheetTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="lg:hidden text-text-secondary hover:text-text-primary hover:bg-charcoal-higher rounded-full h-9 w-9 transition-colors"
+                    className="lg:hidden text-text-secondary hover:text-text-primary hover:bg-charcoal-higher rounded-full h-10 w-10 transition-colors focus-visible:ring-1 focus-visible:ring-primary"
                     aria-label="Open navigation menu"
                   >
                     <Menu className="h-5 w-5" />
@@ -78,7 +81,7 @@ export function MainHeader() {
 
                 <SheetContent
                   side="left"
-                  className="p-0 w-[300px] sm:w-[340px] flex flex-col h-full bg-charcoal border-r border-border-subtle"
+                  className="p-0 w-[85vw] max-w-[340px] flex flex-col h-full bg-charcoal border-r border-border-subtle"
                 >
                   <SheetHeader className="p-4 border-b border-border-subtle flex-row items-center justify-between space-y-0 text-left shrink-0">
                     <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
@@ -87,33 +90,34 @@ export function MainHeader() {
                     </div>
                   </SheetHeader>
 
-                  <div className="p-4 flex-1 overflow-y-auto space-y-6">
-                    {/* Categories */}
+                  {/* Scrollable Categories & Navigation */}
+                  <div className="p-4 flex-1 overflow-y-auto space-y-6 touch-pan-y">
                     <div>
                       <p className="px-3 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
                         Categories
                       </p>
-                      <div className="space-y-1">
+                      <nav className="space-y-1">
                         {PART_CATEGORIES.map((cat) => (
                           <SheetClose asChild key={cat.value}>
                             <Link
                               href={`/search?category=${cat.value}`}
-                              className="flex items-center px-3 py-2 rounded-lg text-sm text-text-secondary hover:bg-charcoal-elevated hover:text-text-primary transition-colors"
+                              className="flex items-center min-h-[40px] px-3 py-2 rounded-lg text-sm text-text-secondary hover:bg-charcoal-elevated hover:text-text-primary active:bg-charcoal-higher transition-colors"
                             >
                               {cat.label}
                             </Link>
                           </SheetClose>
                         ))}
-                      </div>
+                      </nav>
                     </div>
                   </div>
 
-                  <div className="p-4 border-t border-border-subtle bg-charcoal-elevated shrink-0 space-y-2">
+                  {/* Auth Actions in Drawer */}
+                  <div className="p-4 border-t border-border-subtle bg-charcoal-elevated shrink-0 space-y-2 pb-safe">
                     <SheetClose asChild>
                       <Link href="/signin" className="w-full block">
                         <Button
                           variant="outline"
-                          className="w-full justify-center border-border-subtle text-text-primary hover:bg-charcoal-higher"
+                          className="w-full h-11 justify-center border-border-subtle text-text-primary hover:bg-charcoal-higher font-medium"
                         >
                           Sign In
                         </Button>
@@ -121,7 +125,7 @@ export function MainHeader() {
                     </SheetClose>
                     <SheetClose asChild>
                       <Link href="/signup" className="w-full block">
-                        <Button className="w-full justify-center bg-primary hover:bg-primary-600 text-primary-foreground">
+                        <Button className="w-full h-11 justify-center bg-primary hover:bg-primary-600 text-primary-foreground font-semibold">
                           Get Started
                         </Button>
                       </Link>
@@ -130,7 +134,9 @@ export function MainHeader() {
                 </SheetContent>
               </Sheet>
 
-              <Logo width={110} />
+              <Link href="/" className="flex items-center focus-visible:outline-none">
+                <Logo width={100} className="sm:w-[110px]" />
+              </Link>
             </div>
 
             {/* Desktop: Location + Search */}
@@ -142,10 +148,9 @@ export function MainHeader() {
             </div>
 
             {/* Right: Actions */}
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              
-              {/* Mobile: Location Icon */}
-              <div className="md:hidden">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              {/* Mobile: Location Picker Toggle */}
+              <div className="md:hidden flex items-center">
                 <LocationPicker />
               </div>
 
@@ -153,7 +158,7 @@ export function MainHeader() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden text-text-secondary hover:text-text-primary hover:bg-charcoal-higher rounded-full h-9 w-9 transition-colors"
+                className="md:hidden text-text-secondary hover:text-text-primary hover:bg-charcoal-higher rounded-full h-10 w-10 transition-colors"
                 onClick={handleSearchToggle}
                 aria-label={isSearchOpen ? 'Close search' : 'Open search'}
               >
@@ -164,11 +169,12 @@ export function MainHeader() {
                 )}
               </Button>
 
+              {/* Desktop Auth Buttons */}
               <Link href="/signin" className="hidden sm:block">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="font-medium text-text-secondary hover:text-primary"
+                  className="font-medium text-text-secondary hover:text-primary transition-colors"
                 >
                   Sign In
                 </Button>
@@ -177,12 +183,13 @@ export function MainHeader() {
               <Link href="/signup" className="hidden sm:block">
                 <Button
                   size="sm"
-                  className="bg-primary hover:bg-primary-600 text-primary-foreground font-semibold rounded-full px-4 h-9"
+                  className="bg-primary hover:bg-primary-600 text-primary-foreground font-semibold rounded-full px-4 h-9 shadow-sm"
                 >
                   Get Started
                 </Button>
               </Link>
 
+              {/* Mobile Sign In Accent Button */}
               <Link href="/signin" className="sm:hidden">
                 <Button
                   size="sm"
@@ -194,13 +201,13 @@ export function MainHeader() {
             </div>
           </div>
 
-          {/* Mobile search dropdown (Search only, triggered by Search icon) */}
+          {/* Mobile Collapsible Search Container */}
           <div
             className={cn(
               'md:hidden transition-all duration-300 ease-in-out relative z-20 overflow-hidden',
               isSearchOpen
-                ? 'max-h-16 pb-3 opacity-100'
-                : 'max-h-0 opacity-0',
+                ? 'max-h-20 pb-3 opacity-100'
+                : 'max-h-0 opacity-0 pointer-events-none',
             )}
           >
             <div className="pt-1">

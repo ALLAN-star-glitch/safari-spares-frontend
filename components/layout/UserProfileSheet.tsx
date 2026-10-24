@@ -26,7 +26,6 @@ interface UserProfileSheetProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Mock user data - replace with Redux state / API data later
 const MOCK_USER = {
   name: 'James Mwangi',
   phone: '+254 712 345 678',
@@ -40,16 +39,16 @@ export function UserProfileSheet({ open, onOpenChange }: UserProfileSheetProps) 
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="bg-charcoal border-t border-border-subtle rounded-t-[32px] p-0 max-h-[90vh] overflow-y-auto"
+        className="bg-charcoal border border-border-subtle rounded-[32px] p-0 max-h-[85vh] overflow-y-auto mb-2 mx-auto w-[calc(100%-16px)] max-w-md"
       >
         <SheetTitle className="sr-only">User Profile Menu</SheetTitle>
         
-        {/* Drag handle */}
-        <div className="flex justify-center pt-3 pb-6">
+        {/* Drag handle (visual only) */}
+        <div className="flex justify-center pt-3 pb-4">
           <div className="h-1.5 w-12 rounded-full bg-border-subtle" />
         </div>
 
-        <div className="px-6 pb-12">
+        <div className="px-6 pb-8">
           {/* User Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
@@ -76,7 +75,7 @@ export function UserProfileSheet({ open, onOpenChange }: UserProfileSheetProps) 
           </div>
 
           {/* Primary Links */}
-          <div className="space-y-1 mb-8">
+          <div className="space-y-1 mb-6">
             <Link href="/garage" onClick={() => onOpenChange(false)} className="flex items-center justify-between py-3 group">
               <div className="flex items-center gap-4">
                 <CarFront className="h-6 w-6 text-primary" strokeWidth={1.5} />
@@ -146,7 +145,7 @@ export function UserProfileSheet({ open, onOpenChange }: UserProfileSheetProps) 
 
           <div className="h-px w-full bg-border-subtle/50 mb-6" />
 
-          {/* Earn with Safari Spares */}
+          {/* Earn Section */}
           <div>
             <p className="mb-4 text-sm font-medium text-text-secondary">
               Earn with Safari Spares
