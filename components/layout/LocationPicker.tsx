@@ -69,7 +69,7 @@ export function LocationPicker({ className }: LocationPickerProps) {
           
           <MapPin className={cn(
             "relative h-4 w-4 shrink-0 transition-colors",
-            open ? "text-primary drop-shadow-[0_0_4px_rgba(20,184,122,0.4)]" : "text-primary/70"
+            open ? "text-primary" : "text-primary/70"
           )} />
           
           <span
@@ -111,7 +111,7 @@ export function LocationPicker({ className }: LocationPickerProps) {
             <span className="text-sm font-medium text-text-secondary group-focus:text-text-primary">
               All Kenya
             </span>
-            {!currentLocation && <Check className="h-4 w-4 text-primary drop-shadow-[0_0_4px_rgba(20,184,122,0.4)]" />}
+            {!currentLocation && <Check className="h-4 w-4 text-primary" />}
           </DropdownMenuItem>
 
           {KENYA_COUNTIES.map((county) => {
@@ -128,7 +128,7 @@ export function LocationPicker({ className }: LocationPickerProps) {
                 )}>
                   {county}
                 </span>
-                {isSelected && <Check className="h-4 w-4 text-primary drop-shadow-[0_0_4px_rgba(20,184,122,0.4)]" />}
+                {isSelected && <Check className="h-4 w-4 text-primary" />}
               </DropdownMenuItem>
             );
           })}

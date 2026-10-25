@@ -17,7 +17,6 @@ import {
   SheetTrigger,
   SheetClose,
 } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PART_CATEGORIES } from '@/lib/constants';
 import { useEffect, useState } from 'react';
@@ -26,7 +25,7 @@ import { useEffect, useState } from 'react';
 const NOISE =
   "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\")";
 
-/* Icon-sized metal keycap — same physics as HeroSection's CTAs */
+/* Icon-sized metal keycap */
 const KEYCAP_ICON =
   'group relative inline-flex items-center justify-center rounded-full h-9 w-9 sm:h-10 sm:w-10 select-none outline-none ' +
   'transition-[transform,box-shadow,filter,color] duration-150 ease-out ' +
@@ -40,7 +39,7 @@ const KEYCAP_ICON =
   'focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal ' +
   'motion-reduce:transition-none motion-reduce:transform-none';
 
-/* Ghost keycap — "engraved label" button (Sign In on desktop) */
+/* Ghost keycap */
 const KEYCAP_GHOST =
   'group relative inline-flex items-center justify-center rounded-full px-4 h-9 select-none outline-none ' +
   'text-sm font-medium text-text-secondary ' +
@@ -53,7 +52,7 @@ const KEYCAP_GHOST =
   'focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal ' +
   'motion-reduce:transition-none motion-reduce:transform-none';
 
-/* Primary keycap — matches HeroSection's "Find Parts" button exactly */
+/* Primary keycap */
 const KEYCAP_PRIMARY =
   'group/btn relative inline-flex items-center justify-center rounded-full px-4 h-9 select-none outline-none ' +
   'text-sm font-semibold text-primary-foreground ' +
@@ -67,31 +66,23 @@ const KEYCAP_PRIMARY =
   'focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal ' +
   'motion-reduce:transition-none motion-reduce:transform-none';
 
-/* Extruded lettering on the primary cap */
 const PRIMARY_TEXT_SHADOW = '0 1px 0 rgba(255,255,255,0.28)';
-/* Engraved label for ghost caps */
-const ENGRAVE_TEXT_SHADOW =
-  '0 -1px 0 rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.06)';
+const ENGRAVE_TEXT_SHADOW = '0 -1px 0 rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.06)';
 
-/* Recessed Phillips-style screw for the sheet header */
+/* Recessed Phillips-style screw */
 function Screw({ className, angle }: { className: string; angle: number }) {
   return (
     <span
       aria-hidden="true"
       className={cn('pointer-events-none absolute z-10 h-[7px] w-[7px] rounded-full', className)}
       style={{
-        background:
-          'radial-gradient(circle at 35% 28%, #8a9097 0%, #4a4f55 40%, #17191c 100%)',
-        boxShadow:
-          '0 0 0 1px rgba(0,0,0,0.85), inset 0 1px 1px rgba(255,255,255,0.30), inset 0 -1px 1px rgba(0,0,0,0.7)',
+        background: 'radial-gradient(circle at 35% 28%, #8a9097 0%, #4a4f55 40%, #17191c 100%)',
+        boxShadow: '0 0 0 1px rgba(0,0,0,0.85), inset 0 1px 1px rgba(255,255,255,0.30), inset 0 -1px 1px rgba(0,0,0,0.7)',
       }}
     >
       <span
         className="absolute left-1/2 top-1/2 block h-[1px] w-[5px] -translate-x-1/2 -translate-y-1/2 bg-black/80"
-        style={{
-          transform: `translate(-50%,-50%) rotate(${angle}deg)`,
-          boxShadow: '0 0.5px 0 rgba(255,255,255,0.18)',
-        }}
+        style={{ transform: `translate(-50%,-50%) rotate(${angle}deg)`, boxShadow: '0 0.5px 0 rgba(255,255,255,0.18)' }}
       />
     </span>
   );
@@ -132,32 +123,31 @@ export function MainHeader() {
     <header
       className={cn(
         'fixed top-0 left-0 right-0 z-50 select-none transition-all duration-300',
-        // The chassis: brushed metal top surface with a live grain overlay
+        // Chassis surface
         scrolled
           ? 'bg-[linear-gradient(180deg,#1C2024_0%,#141719_55%,#0D0F11_100%)] backdrop-blur-xl border-b border-border-subtle'
           : 'bg-[linear-gradient(180deg,rgba(28,32,36,0.92)_0%,rgba(20,23,25,0.65)_55%,rgba(13,15,17,0.35)_100%)] backdrop-blur-md border-b border-white/[0.04]',
-        // Physical depth: inset top highlight + heavy bottom drop
+        // Physical depth
         scrolled
           ? 'shadow-[inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-1px_0_rgba(0,0,0,0.9),0_10px_24px_rgba(0,0,0,0.55)]'
           : 'shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_16px_rgba(0,0,0,0.35)]'
       )}
     >
-      {/* Cast-metal grain across the whole chassis */}
+      {/* Cast-metal grain across the whole chassis (Hidden on mobile to save GPU) */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.09] mix-blend-overlay"
+        className="hidden sm:block pointer-events-none absolute inset-0 opacity-[0.09] mix-blend-overlay"
         style={{ backgroundImage: NOISE, backgroundSize: '160px 160px' }}
         aria-hidden="true"
       />
 
-      {/* Lit rail along the bottom of the chassis — intensifies when scrolled */}
+      {/* Lit rail along the bottom of the chassis */}
       <div
         className={cn(
           'pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-px transition-opacity duration-300',
           scrolled ? 'opacity-100' : 'opacity-40'
         )}
         style={{
-          background:
-            'linear-gradient(90deg, transparent, rgba(20,184,122,0.45) 25%, rgba(232,163,61,0.28) 60%, transparent)',
+          background: 'linear-gradient(90deg, transparent, rgba(20,184,122,0.45) 25%, rgba(232,163,61,0.28) 60%, transparent)',
         }}
         aria-hidden="true"
       />
@@ -176,7 +166,6 @@ export function MainHeader() {
                     className={cn(KEYCAP_ICON, 'lg:hidden')}
                     aria-label="Open navigation menu"
                   >
-                    {/* Gloss on the upper half of the cap */}
                     <span
                       aria-hidden="true"
                       className="pointer-events-none absolute inset-x-[3px] top-[2px] h-1/2 rounded-t-full bg-gradient-to-b from-white/14 to-transparent"
@@ -185,7 +174,7 @@ export function MainHeader() {
                   </button>
                 </SheetTrigger>
 
-                {/* Drawer: a machined plate that slides in */}
+                {/* Drawer */}
                 <SheetContent
                   side="left"
                   className={cn(
@@ -194,9 +183,9 @@ export function MainHeader() {
                     'shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_-1px_0_0_rgba(0,0,0,0.9),8px_0_24px_rgba(0,0,0,0.6)]'
                   )}
                 >
-                  {/* Grain overlay for the plate */}
+                  {/* Grain overlay (Hidden on mobile) */}
                   <div
-                    className="pointer-events-none absolute inset-0 opacity-[0.10] mix-blend-overlay"
+                    className="hidden sm:block pointer-events-none absolute inset-0 opacity-[0.10] mix-blend-overlay"
                     style={{ backgroundImage: NOISE, backgroundSize: '140px 140px' }}
                     aria-hidden="true"
                   />
@@ -206,12 +195,10 @@ export function MainHeader() {
                     <div className="inline-flex items-center">
                       <Logo width={100} />
                     </div>
-                    {/* Corner screws — the plate is bolted to the chassis */}
                     <Screw className="right-2 top-2" angle={20} />
                     <Screw className="bottom-2 right-2" angle={-40} />
                   </SheetHeader>
 
-                  {/* Scrollable Categories & Navigation */}
                   <div className="relative p-4 flex-1 overflow-y-auto space-y-6 touch-pan-y">
                     <div>
                       <p
@@ -226,7 +213,6 @@ export function MainHeader() {
                             <Link
                               href={`/search?category=${cat.value}`}
                               className={cn(
-                                // Pressed-in row: inset shadows say "recessed into the plate"
                                 'group/row flex items-center min-h-[40px] px-3 py-2 rounded-md text-sm text-text-secondary',
                                 'bg-[linear-gradient(180deg,rgba(10,12,14,0.7)_0%,rgba(20,23,26,0.6)_100%)]',
                                 'shadow-[inset_0_1px_2px_rgba(0,0,0,0.7),inset_0_-1px_0_rgba(255,255,255,0.04),0_0_0_1px_rgba(0,0,0,0.5)]',
@@ -236,7 +222,6 @@ export function MainHeader() {
                                 'active:brightness-90'
                               )}
                             >
-                              {/* LED bleed on hover */}
                               <span
                                 aria-hidden="true"
                                 className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[2px] rounded-full opacity-0 group-hover/row:opacity-100 transition-opacity"
@@ -255,7 +240,6 @@ export function MainHeader() {
                     </div>
                   </div>
 
-                  {/* Auth Actions in Drawer */}
                   <div className="relative p-4 border-t border-white/[0.06] shrink-0 space-y-2 pb-safe bg-[linear-gradient(180deg,rgba(0,0,0,0)_0%,rgba(0,0,0,0.35)_100%)]">
                     <SheetClose asChild>
                       <Link href="/signin" className="w-full block">
@@ -296,12 +280,10 @@ export function MainHeader() {
 
             {/* Right: Actions */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              {/* Mobile: Location Picker Toggle */}
               <div className="md:hidden flex items-center shrink-0">
                 <LocationPicker />
               </div>
 
-              {/* Mobile: Search Toggle (metal keycap) */}
               <button
                 type="button"
                 className={cn(KEYCAP_ICON, 'md:hidden h-8 w-8 sm:h-9 sm:w-9')}
@@ -319,14 +301,12 @@ export function MainHeader() {
                 )}
               </button>
 
-              {/* Desktop Sign In (ghost keycap) */}
               <Link href="/signin" className="hidden sm:block">
                 <span className={KEYCAP_GHOST}>
                   <span style={{ textShadow: ENGRAVE_TEXT_SHADOW }}>Sign In</span>
                 </span>
               </Link>
 
-              {/* Desktop Get Started (primary keycap) */}
               <Link href="/signup" className="hidden sm:block">
                 <span className={KEYCAP_PRIMARY}>
                   <span
@@ -339,7 +319,6 @@ export function MainHeader() {
                 </span>
               </Link>
 
-              {/* Mobile Sign In (compact primary keycap) */}
               <Link href="/signin" className="sm:hidden shrink-0">
                 <span className={cn(KEYCAP_PRIMARY, 'px-3 h-8 text-xs')}>
                   <span
@@ -354,7 +333,6 @@ export function MainHeader() {
             </div>
           </div>
 
-          {/* Mobile Collapsible Search Container — slides out of the chassis */}
           <div
             className={cn(
               'md:hidden transition-all duration-300 ease-in-out relative z-20 overflow-hidden',
@@ -368,7 +346,6 @@ export function MainHeader() {
         </div>
       </div>
 
-      {/* Category strip — desktop only (already upgraded) */}
       <CategoryStrip />
     </header>
   );

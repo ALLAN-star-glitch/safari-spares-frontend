@@ -245,9 +245,9 @@ export default function HomePage() {
             "shadow-[inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-1px_0_rgba(0,0,0,0.9),0_12px_30px_rgba(0,0,0,0.6)]",
             "border border-black/80"
           )}>
-            {/* Cast grain texture overlay */}
+            {/* Cast grain texture overlay - Hidden on mobile to save GPU */}
             <div
-              className="pointer-events-none absolute inset-0 z-0 opacity-[0.08] mix-blend-overlay"
+              className="hidden sm:block pointer-events-none absolute inset-0 z-0 opacity-[0.08] mix-blend-overlay"
               style={{ backgroundImage: NOISE, backgroundSize: '140px 140px' }}
               aria-hidden="true"
             />

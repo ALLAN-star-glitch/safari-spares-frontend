@@ -79,7 +79,7 @@ export function CategoryStrip() {
 
   return (
     <div className="relative hidden lg:block border-t border-border-subtle/30 bg-[#0A0C0E]">
-      {/* Lit rail along the top edge — same idiom as HeroSection's bottom rail */}
+      {/* Lit rail along the top edge */}
       <div
         className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-px"
         style={{
@@ -88,7 +88,7 @@ export function CategoryStrip() {
         }}
       />
 
-      {/* Vignette: pulls the eye toward the row of switches */}
+      {/* Vignette */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -97,9 +97,9 @@ export function CategoryStrip() {
         }}
       />
 
-      {/* Cast-metal grain over the whole panel */}
+      {/* Cast-metal grain — softer opacity to reduce repaints */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.10] mix-blend-overlay"
+        className="pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-overlay"
         style={{ backgroundImage: NOISE, backgroundSize: '140px 140px' }}
       />
 
@@ -142,7 +142,7 @@ export function CategoryStrip() {
                   {cat.label}
                 </span>
 
-                {/* Corner screws — visible on both states, denser on active */}
+                {/* Corner screws */}
                 <Screw className="left-[3px] top-[3px]" angle={25} />
                 <Screw className="right-[3px] top-[3px]" angle={-45} />
                 <Screw className="bottom-[3px] left-[3px]" angle={70} />
