@@ -2,13 +2,21 @@
 // app/(public)/page.tsx
 
 import Link from 'next/link';
-import { ArrowRight, Cog, Disc, Zap, CarFront, CircleDashed, Settings2 } from 'lucide-react';
-import { HeroSection } from '@/components/home/HeroSection';
-import { ActionCards } from '@/components/home/ActionCards';
+import { ArrowRight, Cog, Disc, Zap, CarFront, CircleDashed, Settings2, Store } from 'lucide-react';
 import { ListingCard } from '@/components/marketplace/ListingCard';
 import { ShopCard } from '@/components/marketplace/ShopCard';
 import { MechanicCard } from '@/components/marketplace/MechanicCard';
 import { PART_CATEGORIES } from '@/lib/constants';
+import { CategoryCard } from '@/components/home/category-card';
+import { ActionCards } from '@/components/home/ActionCards';
+import { HeroSection } from '@/components/home/HeroSection';
+import { cn } from '@/lib/utils';
+
+// Reusing the exact noise from the other components
+const NOISE =
+  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\")";
+
+const PRIMARY_TEXT_SHADOW = '0 1px 0 rgba(255,255,255,0.28)';
 
 // Icon map for circular categories
 const CATEGORY_ICONS: Record<string, any> = {
@@ -133,7 +141,7 @@ export default function HomePage() {
       
       <ActionCards />
 
-      {/* Browse Categories */}
+       {/* Browse Categories */}
       <section className="py-10">
         <div className="container mx-auto px-4">
           <div className="mb-6 flex items-center justify-between">
@@ -149,37 +157,9 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
-            {PART_CATEGORIES.map((cat) => {
-              const Icon = CATEGORY_ICONS[cat.value] || Cog;
-              return (
-                <Link
-                  key={cat.value}
-                  href={`/search?category=${cat.value}`}
-                  className="group flex flex-col items-center gap-3"
-                >
-                  {/* Elegant Category Circle */}
-                  <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-charcoal-elevated transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_8px_20px_rgba(20,184,122,0.15)] sm:h-20 sm:w-20">
-                    {/* Subtle inner border */}
-                    <div className="absolute inset-0 rounded-full border border-border-subtle transition-colors duration-300 group-hover:border-primary/30" />
-                    
-                    {/* Glowing outer ring on hover */}
-                    <div className="absolute inset-0 rounded-full border-2 border-transparent transition-colors duration-300 group-hover:border-primary/20 scale-105 opacity-0 group-hover:opacity-100 group-hover:scale-100" />
-
-                    {/* Subtle radial gradient background */}
-                    <div className="absolute inset-1 rounded-full bg-gradient-to-br from-charcoal to-charcoal-higher" />
-
-                    {/* Icon */}
-                    <Icon
-                      className="relative z-10 h-7 w-7 text-text-secondary transition-colors duration-300 group-hover:text-primary sm:h-8 sm:w-8"
-                      strokeWidth={1.5}
-                    />
-                  </div>
-                  <span className="text-center text-[12px] font-semibold tracking-tight text-text-secondary group-hover:text-text-primary transition-colors sm:text-[13px]">
-                    {cat.label.split(' & ')[0]}
-                  </span>
-                </Link>
-              );
-            })}
+            {PART_CATEGORIES.map((cat) => (
+              <CategoryCard key={cat.value} cat={cat} />
+            ))}
           </div>
         </div>
       </section>
@@ -255,24 +235,72 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Open a Shop CTA */}
+      {/* Open a Shop CTA — Now with Cast-Metal Texture */}
       <section className="py-12">
         <div className="container mx-auto px-4">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary/10 via-charcoal-elevated to-charcoal-elevated p-8 sm:p-12 border border-border-subtle">
+          <div className={cn(
+            "relative overflow-hidden rounded-3xl p-8 sm:p-12",
+            // 3D Cast Metal Frame
+            "bg-[linear-gradient(180deg,#1C2024_0%,#141719_55%,#0D0F11_100%)]",
+            "shadow-[inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-1px_0_rgba(0,0,0,0.9),0_12px_30px_rgba(0,0,0,0.6)]",
+            "border border-black/80"
+          )}>
+            {/* Cast grain texture overlay */}
+            <div
+              className="pointer-events-none absolute inset-0 z-0 opacity-[0.08] mix-blend-overlay"
+              style={{ backgroundImage: NOISE, backgroundSize: '140px 140px' }}
+              aria-hidden="true"
+            />
+
+            {/* Lit rail along the top edge */}
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-px"
+              style={{
+                background:
+                  'linear-gradient(90deg, transparent, rgba(255,255,255,0.15) 20%, rgba(232,163,61,0.3) 50%, rgba(255,255,255,0.15) 80%, transparent)',
+              }}
+              aria-hidden="true"
+            />
+
             <div className="relative z-10 md:w-2/3">
-              <h2 className="mb-3 text-2xl font-bold text-text-primary sm:text-3xl">
+              {/* Icon Bezel */}
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,#2A2E33,#141619)] shadow-[inset_0_1px_0_rgba(255,255,255,0.1),inset_0_-1px_0_rgba(0,0,0,0.6),0_4px_8px_rgba(0,0,0,0.5)] border border-white/5">
+                <Store className="h-8 w-8 text-secondary drop-shadow-[0_0_8px_rgba(232,163,61,0.4)]" strokeWidth={1.5} />
+              </div>
+
+              <h2 
+                className="mb-3 text-2xl font-bold text-text-primary sm:text-3xl tracking-tight"
+                style={{ textShadow: '0 -1px 0 rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.05)' }}
+              >
                 Turn your shop into a digital storefront
               </h2>
-              <p className="mb-6 max-w-lg text-text-secondary">
+              <p className="mb-8 max-w-lg text-text-secondary">
                 Reach thousands of buyers. Get a verified badge, manage inventory, 
                 and grow your business with Safari Spares.
               </p>
+              
+              {/* Primary Keycap CTA */}
               <Link
                 href="/for-sellers"
-                className="inline-flex items-center gap-2 rounded-full bg-secondary px-6 py-3 text-sm font-semibold text-secondary-foreground transition-colors hover:bg-secondary-600"
+                className={cn(
+                  'group/btn relative inline-flex items-center justify-center rounded-full px-6 h-12 select-none outline-none',
+                  'text-secondary-foreground font-semibold text-base',
+                  'transition-[transform,box-shadow,filter] duration-150 ease-out',
+                  'bg-[linear-gradient(180deg,#F6C77A_0%,#E8A33D_46%,#C4852A_100%)]',
+                  'shadow-[inset_0_1px_0_rgba(255,255,255,0.55),inset_0_-3px_4px_rgba(0,0,0,0.22),0_0_0_1px_rgba(80,40,5,0.9),0_4px_0_#9C671E,0_12px_22px_rgba(232,163,61,0.30)]',
+                  'hover:-translate-y-px hover:brightness-110',
+                  'active:translate-y-[3px]',
+                  'active:shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-2px_3px_rgba(0,0,0,0.25),0_0_0_1px_rgba(80,40,5,0.9),0_1px_0_#9C671E,0_4px_8px_rgba(232,163,61,0.25)]'
+                )}
               >
-                Learn More
-                <ArrowRight className="h-4 w-4" />
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-[3px] top-[2px] h-1/2 rounded-t-full bg-gradient-to-b from-white/30 to-transparent"
+                />
+                <span className="relative" style={{ textShadow: '0 1px 0 rgba(255,255,255,0.3)' }}>
+                  Learn More
+                </span>
+                <ArrowRight className="relative ml-2 h-4 w-4" />
               </Link>
             </div>
           </div>
