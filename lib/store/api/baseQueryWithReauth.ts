@@ -30,9 +30,9 @@ export const rawBaseQuery = fetchBaseQuery({
 });
 
 const NO_REFRESH_PATHS = [
-  '/auth/login',
-  '/auth/register',
+  '/auth/request-otp',
   '/auth/verify-otp',
+  '/auth/complete-onboarding',
   '/auth/refresh',
   '/auth/logout',
 ];

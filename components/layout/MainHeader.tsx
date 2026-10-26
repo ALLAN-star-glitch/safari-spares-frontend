@@ -3,8 +3,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Menu, Search, X } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Menu, Search, X, User, LayoutDashboard, LogOut, UserCircle, ChevronDown, Bell, MessageSquare } from 'lucide-react';
 import { Logo } from '../shared/Logo';
 import { SearchBar } from './SearchBar';
 import { LocationPicker } from './LocationPicker';
@@ -20,6 +20,18 @@ import {
 import { cn } from '@/lib/utils';
 import { PART_CATEGORIES } from '@/lib/constants';
 import { useEffect, useState } from 'react';
+import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
+import { useGetMyProfileQuery } from '@/lib/store/api/userApi';
+import { useLogoutMutation } from '@/lib/store/api/authApi';
+import { clearAuth } from '@/lib/store/slices/authSlice';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 
 /* Fine grain: the header reads as a machined chassis, not a flat bar */
 const NOISE =
@@ -88,6 +100,181 @@ function Screw({ className, angle }: { className: string; angle: number }) {
   );
 }
 
+/**
+ * Auth actions — swaps between Sign In / Get Started and the user avatar.
+ */
+function AuthActions() {
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { data: profileData } = useGetMyProfileQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const [logout] = useLogoutMutation();
+
+  const handleLogout = async () => {
+    try {
+      await logout().unwrap();
+    } finally {
+      dispatch(clearAuth());
+      router.push('/');
+    }
+  };
+
+  if (isAuthenticated) {
+    const user = profileData?.data;
+    const firstName = user?.first_name || 'Account';
+    const firstInitial = user?.first_name?.[0] || '';
+    const lastInitial = user?.last_name?.[0] || '';
+    const initials = `${firstInitial}${lastInitial}`.toUpperCase();
+
+    // Mock badge counts — replace with real data later
+    const unreadMessages = 3;
+    const unreadNotifications = 5;
+
+    return (
+      <div className="flex items-center gap-1 sm:gap-2">
+               {/* Messages (desktop only) */}
+        <Link
+          href="/messages"
+          className="relative hidden sm:inline-flex items-center justify-center rounded-full h-9 w-9 text-text-secondary hover:text-text-primary hover:bg-charcoal-higher transition-colors"
+          aria-label="Messages"
+        >
+          <MessageSquare className="h-5 w-5" />
+          {unreadMessages > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1">
+              {unreadMessages > 9 ? '9+' : unreadMessages}
+            </span>
+          )}
+        </Link>
+
+        {/* Notifications (desktop only) */}
+        <Link
+          href="/notifications"
+          className="relative hidden sm:inline-flex items-center justify-center rounded-full h-9 w-9 text-text-secondary hover:text-text-primary hover:bg-charcoal-higher transition-colors"
+          aria-label="Notifications"
+        >
+          <Bell className="h-5 w-5" />
+          {unreadNotifications > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-secondary-foreground px-1">
+              {unreadNotifications > 9 ? '9+' : unreadNotifications}
+            </span>
+          )}
+        </Link>
+
+        {/* Avatar + Name + Chevron Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="ml-0.5 flex items-center gap-2 rounded-full pl-1 pr-2.5 py-1 border border-border-subtle bg-charcoal-elevated hover:border-primary transition-colors shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary">
+              {/* Avatar */}
+              <div className="rounded-full overflow-hidden h-7 w-7 flex items-center justify-center bg-charcoal shrink-0">
+                {user?.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={user.avatar_url}
+                    alt={firstName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : initials ? (
+                  <span className="text-[10px] font-bold text-primary">{initials}</span>
+                ) : (
+                  <User className="h-4 w-4 text-text-muted" />
+                )}
+              </div>
+
+              {/* Name (desktop only) */}
+              <span className="hidden sm:inline text-sm font-medium text-text-primary max-w-[100px] truncate">
+                {firstName}
+              </span>
+
+              {/* Chevron */}
+              <ChevronDown className="h-3.5 w-3.5 text-text-muted shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent
+            align="end"
+            className="w-56 bg-charcoal-elevated border-border-subtle text-text-primary"
+          >
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">
+                  {user?.first_name} {user?.last_name}
+                </p>
+                <p className="text-xs leading-none text-text-muted">
+                  Manage your account
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-border-subtle" />
+
+            <DropdownMenuItem
+              onClick={() => router.push('/dashboard')}
+              className="cursor-pointer focus:bg-charcoal-higher focus:text-primary"
+            >
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              <span>Dashboard</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={() => router.push('/dashboard/profile')}
+              className="cursor-pointer focus:bg-charcoal-higher focus:text-primary"
+            >
+              <UserCircle className="mr-2 h-4 w-4" />
+              <span>Profile Settings</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator className="bg-border-subtle" />
+
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="cursor-pointer text-red-500 focus:bg-red-500/10 focus:text-red-500"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+  }
+
+  // ... (keep the unauthenticated return block exactly as it is)
+  return (
+    <>
+      <Link href="/signin" className="hidden sm:block">
+        <span className={KEYCAP_GHOST}>
+          <span style={{ textShadow: ENGRAVE_TEXT_SHADOW }}>Sign In</span>
+        </span>
+      </Link>
+
+      <Link href="/signin" className="hidden sm:block">
+        <span className={KEYCAP_PRIMARY}>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-[3px] top-[2px] h-1/2 rounded-t-full bg-gradient-to-b from-white/30 to-transparent"
+          />
+          <span className="relative" style={{ textShadow: PRIMARY_TEXT_SHADOW }}>
+            Get Started
+          </span>
+        </span>
+      </Link>
+
+      <Link href="/signin" className="sm:hidden shrink-0">
+        <span className={cn(KEYCAP_PRIMARY, 'px-3 h-8 text-xs')}>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-[3px] top-[2px] h-1/2 rounded-t-full bg-gradient-to-b from-white/30 to-transparent"
+          />
+          <span className="relative" style={{ textShadow: PRIMARY_TEXT_SHADOW }}>
+            Sign In
+          </span>
+        </span>
+      </Link>
+    </>
+  );
+}
 export function MainHeader() {
   const pathname = usePathname();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -106,9 +293,6 @@ export function MainHeader() {
     setIsSearchOpen(false);
   }, [pathname]);
 
-  if (pathname?.startsWith('/signin') || pathname?.startsWith('/signup')) {
-    return null;
-  }
 
   const handleSearchToggle = () => {
     const next = !isSearchOpen;
@@ -123,24 +307,20 @@ export function MainHeader() {
     <header
       className={cn(
         'fixed top-0 left-0 right-0 z-50 select-none transition-all duration-300',
-        // Chassis surface
         scrolled
           ? 'bg-[linear-gradient(180deg,#1C2024_0%,#141719_55%,#0D0F11_100%)] backdrop-blur-xl border-b border-border-subtle'
           : 'bg-[linear-gradient(180deg,rgba(28,32,36,0.92)_0%,rgba(20,23,25,0.65)_55%,rgba(13,15,17,0.35)_100%)] backdrop-blur-md border-b border-white/[0.04]',
-        // Physical depth
         scrolled
           ? 'shadow-[inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-1px_0_rgba(0,0,0,0.9),0_10px_24px_rgba(0,0,0,0.55)]'
           : 'shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_16px_rgba(0,0,0,0.35)]'
       )}
     >
-      {/* Cast-metal grain across the whole chassis (Hidden on mobile to save GPU) */}
       <div
         className="hidden sm:block pointer-events-none absolute inset-0 opacity-[0.09] mix-blend-overlay"
         style={{ backgroundImage: NOISE, backgroundSize: '160px 160px' }}
         aria-hidden="true"
       />
 
-      {/* Lit rail along the bottom of the chassis */}
       <div
         className={cn(
           'pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-px transition-opacity duration-300',
@@ -154,10 +334,7 @@ export function MainHeader() {
 
       <div className="container relative mx-auto px-2 sm:px-4">
         <div className="flex flex-col">
-          {/* Top Row */}
           <div className="flex items-center justify-between h-14 sm:h-16 md:h-[72px] gap-1 sm:gap-2 min-w-0">
-
-            {/* Left: Mobile Menu + Logo */}
             <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               <Sheet>
                 <SheetTrigger asChild>
@@ -174,7 +351,6 @@ export function MainHeader() {
                   </button>
                 </SheetTrigger>
 
-                {/* Drawer */}
                 <SheetContent
                   side="left"
                   className={cn(
@@ -183,7 +359,6 @@ export function MainHeader() {
                     'shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_-1px_0_0_rgba(0,0,0,0.9),8px_0_24px_rgba(0,0,0,0.6)]'
                   )}
                 >
-                  {/* Grain overlay (Hidden on mobile) */}
                   <div
                     className="hidden sm:block pointer-events-none absolute inset-0 opacity-[0.10] mix-blend-overlay"
                     style={{ backgroundImage: NOISE, backgroundSize: '140px 140px' }}
@@ -249,7 +424,7 @@ export function MainHeader() {
                       </Link>
                     </SheetClose>
                     <SheetClose asChild>
-                      <Link href="/signup" className="w-full block">
+                      <Link href="/signin" className="w-full block">
                         <span className={cn(KEYCAP_PRIMARY, 'w-full h-11 justify-center')}>
                           <span
                             aria-hidden="true"
@@ -270,7 +445,6 @@ export function MainHeader() {
               </Link>
             </div>
 
-            {/* Desktop: Location + Search */}
             <div className="hidden md:flex flex-1 items-center gap-2 mx-4 max-w-3xl">
               <LocationPicker />
               <div className="flex-1">
@@ -278,7 +452,6 @@ export function MainHeader() {
               </div>
             </div>
 
-            {/* Right: Actions */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <div className="md:hidden flex items-center shrink-0">
                 <LocationPicker />
@@ -301,35 +474,7 @@ export function MainHeader() {
                 )}
               </button>
 
-              <Link href="/signin" className="hidden sm:block">
-                <span className={KEYCAP_GHOST}>
-                  <span style={{ textShadow: ENGRAVE_TEXT_SHADOW }}>Sign In</span>
-                </span>
-              </Link>
-
-              <Link href="/signup" className="hidden sm:block">
-                <span className={KEYCAP_PRIMARY}>
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-[3px] top-[2px] h-1/2 rounded-t-full bg-gradient-to-b from-white/30 to-transparent"
-                  />
-                  <span className="relative" style={{ textShadow: PRIMARY_TEXT_SHADOW }}>
-                    Get Started
-                  </span>
-                </span>
-              </Link>
-
-              <Link href="/signin" className="sm:hidden shrink-0">
-                <span className={cn(KEYCAP_PRIMARY, 'px-3 h-8 text-xs')}>
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-[3px] top-[2px] h-1/2 rounded-t-full bg-gradient-to-b from-white/30 to-transparent"
-                  />
-                  <span className="relative" style={{ textShadow: PRIMARY_TEXT_SHADOW }}>
-                    Sign In
-                  </span>
-                </span>
-              </Link>
+              <AuthActions />
             </div>
           </div>
 

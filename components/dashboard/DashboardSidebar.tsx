@@ -1,819 +1,260 @@
-/* eslint-disable react-hooks/set-state-in-effect */
+// components/dashboard/DashboardSidebar.tsx
+
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter, useParams } from 'next/navigation';
-import { useState, MouseEvent, useEffect, useMemo } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
-  Calendar,
-  ClipboardList,
-  Users,
-  CreditCard,
-  Award,
-  Clapperboard,
-  Trash2,
+  Package,
+  CalendarCheck,
   Settings,
   LogOut,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  User,
-  Plus,
-  Home,
-  Building2,
-  LucideIcon,
-  Ticket,
-  UserPlus,
-  Check,
-  Layers,
+  UserCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
+import { useAppDispatch } from '@/lib/store/hooks';
 import { useLogoutMutation } from '@/lib/store/api/authApi';
 import { clearAuth } from '@/lib/store/slices/authSlice';
-import { clearWorkspace } from '@/lib/store/slices/workspaceSlice';
-import { LogoutDialog } from '@/components/ui/LogoutDialog';
-import { useGetUserTeamsQuery } from '@/lib/store/api/teamsApi';
-import {
-  useGetMyAccountsQuery,
-  useGetMyMembershipQuery,
-} from '@/lib/store/api/accountsApi';
-import { InviteMemberDialog } from '@/components/team/InviteMemberDialog';
-import { buildTeamSwitchHref } from '@/lib/utils/team-switch';
-import { accountLabel } from '@/lib/utils/account-label';
-import type { Account, AccountRole } from '@/lib/types/account';
-import type { Team } from '@/lib/types/team';
 
-// ============================================================
-// TYPES
-// ============================================================
+/* Fine grain: the sidebar reads as a machined chassis */
+const NOISE =
+  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\")";
 
-interface NavItem {
-  segment: string;
-  label: string;
-  icon: LucideIcon;
-  isTrash?: boolean;
-  href?: string;
-  exact?: boolean;
-  organizersOnly?: boolean;
-  adminsOnly?: boolean;
-  learnersOnly?: boolean;
-  disabled?: boolean;
-  children?: NavItem[];
+/* Engraved text shadow */
+const ENGRAVE = '0 -1px 0 rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.05)';
+
+const NAV_ITEMS = [
+  { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Inventory', href: '/dashboard/inventory', icon: Package },
+  { label: 'Reservations', href: '/dashboard/reservations', icon: CalendarCheck },
+  { label: 'Profile', href: '/dashboard/profile', icon: UserCircle },
+  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+];
+
+/* Shared keycap mechanics: a solid underside shadow is the key's thickness.
+   Hover lifts it, press pushes it down into that shadow. */
+const KEY_BASE =
+  'group relative flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-sm font-medium select-none outline-none ' +
+  'transition-[transform,box-shadow,filter,color] duration-150 ease-out ' +
+  'focus-visible:ring-2 focus-visible:ring-white/40 motion-reduce:transition-none';
+
+const KEY_IDLE =
+  'text-text-secondary ' +
+  'bg-[linear-gradient(180deg,#32373C_0%,#24282C_50%,#1A1D20_100%)] ' +
+  'shadow-[inset_0_1px_0_rgba(255,255,255,0.14),inset_0_-2px_3px_rgba(0,0,0,0.45),0_0_0_1px_rgba(0,0,0,0.75),0_3px_0_#07080A,0_7px_10px_rgba(0,0,0,0.4)] ' +
+  'hover:-translate-y-px hover:text-text-primary hover:brightness-110 ' +
+  'hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_0_-2px_3px_rgba(0,0,0,0.45),0_0_0_1px_rgba(0,0,0,0.75),0_4px_0_#07080A,0_10px_14px_rgba(0,0,0,0.45)] ' +
+  'active:translate-y-[2px] ' +
+  'active:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),inset_0_-2px_3px_rgba(0,0,0,0.5),0_0_0_1px_rgba(0,0,0,0.75),0_1px_0_#07080A,0_3px_5px_rgba(0,0,0,0.4)]';
+
+/* Current page: the key is already pressed in and its LED is on */
+const KEY_ACTIVE =
+  'translate-y-[2px] text-primary ' +
+  'bg-[linear-gradient(180deg,#07090A_0%,#0F1412_100%)] ' +
+  'shadow-[inset_0_3px_6px_rgba(0,0,0,0.9),inset_0_-1px_0_rgba(20,184,122,0.3),0_0_0_1px_rgba(20,184,122,0.35),0_1px_0_rgba(255,255,255,0.05)]';
+
+const KEY_DANGER =
+  'text-red-400 ' +
+  'bg-[linear-gradient(180deg,#4A2020_0%,#2D1313_50%,#1E0B0B_100%)] ' +
+  'shadow-[inset_0_1px_0_rgba(255,170,170,0.16),inset_0_-2px_3px_rgba(0,0,0,0.5),0_0_0_1px_rgba(0,0,0,0.8),0_3px_0_#0C0303,0_7px_10px_rgba(0,0,0,0.4)] ' +
+  'hover:-translate-y-px hover:text-red-300 hover:brightness-125 ' +
+  'hover:shadow-[inset_0_1px_0_rgba(255,170,170,0.22),inset_0_-2px_3px_rgba(0,0,0,0.5),0_0_0_1px_rgba(0,0,0,0.8),0_4px_0_#0C0303,0_10px_16px_rgba(120,20,20,0.35)] ' +
+  'active:translate-y-[2px] ' +
+  'active:shadow-[inset_0_1px_0_rgba(255,170,170,0.1),inset_0_-2px_3px_rgba(0,0,0,0.55),0_0_0_1px_rgba(0,0,0,0.8),0_1px_0_#0C0303,0_3px_5px_rgba(0,0,0,0.4)]';
+
+/* Small recessed screw head, each with its slot at its own angle */
+function Screw({ angle }: { angle: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="relative block h-[9px] w-[9px] shrink-0 rounded-full"
+      style={{
+        background:
+          'radial-gradient(circle at 35% 28%, #8a9097 0%, #4a4f55 38%, #17191c 100%)',
+        boxShadow:
+          '0 0 0 1px rgba(0,0,0,.85), 0 1px 0 1px rgba(255,255,255,.08), inset 0 1px 1px rgba(255,255,255,.35), inset 0 -1px 2px rgba(0,0,0,.7)',
+      }}
+    >
+      <span
+        className="absolute left-1/2 top-1/2 block h-[1.5px] w-[7px] bg-black/80"
+        style={{ transform: `translate(-50%,-50%) rotate(${angle}deg)` }}
+      />
+    </span>
+  );
 }
 
-interface DashboardSidebarProps {
-  onCollapseChange?: (collapsed: boolean) => void;
-  collapsed?: boolean;
+/* Recessed socket the icon sits in; glows when its page is active */
+function IconSocket({
+  active,
+  tone = 'primary',
+  children,
+}: {
+  active?: boolean;
+  tone?: 'primary' | 'danger';
+  children: React.ReactNode;
+}) {
+  const glow =
+    tone === 'danger' ? 'rgba(248,113,113,0.35)' : 'rgba(20,184,122,0.5)';
+  return (
+    <span
+      className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-[box-shadow] duration-200"
+      style={{
+        background: active
+          ? 'radial-gradient(circle at 50% 60%, rgba(20,184,122,0.18), #070909 75%)'
+          : 'radial-gradient(circle at 35% 25%, #2d3237 0%, #131618 80%)',
+        boxShadow: active
+          ? `inset 0 2px 4px rgba(0,0,0,0.9), inset 0 -1px 0 rgba(20,184,122,0.25), 0 0 12px ${glow}`
+          : 'inset 0 2px 3px rgba(0,0,0,0.8), inset 0 -1px 0 rgba(255,255,255,0.1), 0 0 0 1px rgba(0,0,0,0.5)',
+      }}
+    >
+      {children}
+    </span>
+  );
 }
 
-// ============================================================
-// COMPONENT
-// ============================================================
-
-export function DashboardSidebar({
-  onCollapseChange,
-  collapsed: externalCollapsed,
-}: DashboardSidebarProps) {
+export function DashboardSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const params = useParams();
-
-  const urlAccountId = (params?.accountId as string) ?? null;
-  const urlTeamId = (params?.teamId as string) ?? null;
-
-  const workspaceAccountId = useAppSelector((s) => s.workspace.activeAccountId);
-  const workspaceTeamId = useAppSelector((s) => s.workspace.activeTeamId);
-
-  const accountId = urlAccountId ?? workspaceAccountId ?? null;
-  const teamId = urlTeamId ?? workspaceTeamId ?? null;
-
   const dispatch = useAppDispatch();
-  const [logout, { isLoading }] = useLogoutMutation();
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
-  const [internalCollapsed, setInternalCollapsed] = useState(false);
-  const [teamsExpanded, setTeamsExpanded] = useState(false);
-  const [certificatesExpanded, setCertificatesExpanded] = useState(true);
-  const [inviteOpen, setInviteOpen] = useState(false);
+  const [logout] = useLogoutMutation();
 
-  const { data: teamsResponse } = useGetUserTeamsQuery();
-  const teams = teamsResponse?.teams ?? [];
-
-  const { data: accounts } = useGetMyAccountsQuery();
-
-  const { data: myMembership } = useGetMyMembershipQuery(accountId ?? '', {
-    skip: !accountId,
-  });
-
-  const accountById = useMemo(() => {
-    const map = new Map<string, Account>();
-    accounts?.forEach((a) => map.set(a.id, a));
-    return map;
-  }, [accounts]);
-
-  const isAdmin = useMemo(() => {
-    const role = myMembership?.role as AccountRole | undefined;
-    return role === 'account_admin';
-  }, [myMembership]);
-
-  const isOrganizer = useMemo(() => {
-    const role = myMembership?.role as AccountRole | undefined;
-    return role === 'account_admin' || role === 'trainer';
-  }, [myMembership]);
-
-  const isLearner = useMemo(() => {
-    const role = myMembership?.role as AccountRole | undefined;
-    return role === 'learner';
-  }, [myMembership]);
-
-  const TEAM_NAV_ITEMS = useMemo<NavItem[]>(
-    () => [
-      {
-        segment: 'workspaces',
-        label: 'My Workspaces',
-        icon: Layers,
-        href: '/accounts',
-      },
-      { segment: '', label: 'Dashboard', icon: LayoutDashboard },
-      { segment: 'events', label: 'Team Events', icon: Calendar },
-      {
-        segment: 'registrations',
-        label: 'Registrations',
-        icon: ClipboardList,
-        organizersOnly: true,
-      },
-      { segment: 'tickets', label: 'My Tickets', icon: Ticket },
-      {
-        segment: 'attendees',
-        label: 'Attendees',
-        icon: Users,
-        organizersOnly: true,
-      },
-      {
-        segment: 'payments',
-        label: 'Payments',
-        icon: CreditCard,
-        adminsOnly: true,
-      },
-      // Organizer certificates (full management view)
-      {
-        segment: 'certificates',
-        label: 'Certificates',
-        icon: Award,
-        organizersOnly: true,
-        href: accountId ? `/dashboard/${accountId}/certificates` : undefined,
-        children: [
-          {
-            segment: '',
-            label: 'Issued Certificates',
-            icon: Award,
-            href: accountId
-              ? `/dashboard/${accountId}/certificates`
-              : undefined,
-            exact: true,
-          },
-          {
-            segment: '',
-            label: 'Templates',
-            icon: Award,
-            href: accountId
-              ? `/dashboard/${accountId}/certificates/templates`
-              : undefined,
-          },
-        ],
-      },
-      // Learner certificates (self-service view)
-      {
-        segment: 'my-certificates',
-        label: 'My Certificates',
-        icon: Award,
-        learnersOnly: true,
-        href: accountId
-          ? `/me/certificates`
-          : undefined,
-      },
-      {
-        segment: 'replays',
-        label: 'Replays',
-        icon: Clapperboard,
-        disabled: true,
-      },
-      {
-        segment: 'trash',
-        label: 'Trash',
-        icon: Trash2,
-        isTrash: true,
-        organizersOnly: true,
-      },
-    ],
-    [accountId],
-  );
-
-  const visibleNavItems = useMemo(
-    () =>
-      TEAM_NAV_ITEMS.filter((item) => {
-        if (item.adminsOnly) return isAdmin;
-        if (item.organizersOnly) return isOrganizer;
-        if (item.learnersOnly) return isLearner;
-        return true;
-      }),
-    [TEAM_NAV_ITEMS, isAdmin, isOrganizer, isLearner],
-  );
-
-  useEffect(() => {
-    if (externalCollapsed !== undefined) {
-      setInternalCollapsed(externalCollapsed);
-    }
-  }, [externalCollapsed]);
-
-  const collapsed =
-    externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
-
-  const toggleSidebar = () => {
-    const next = !collapsed;
-    setInternalCollapsed(next);
-    onCollapseChange?.(next);
-  };
-
-  const handleLogoutConfirm = async () => {
+  const handleLogout = async () => {
     try {
       await logout().unwrap();
+    } finally {
       dispatch(clearAuth());
-      dispatch(clearWorkspace());
-      router.push('/');
-    } catch (error) {
-      console.error('Logout failed:', error);
-      dispatch(clearAuth());
-      dispatch(clearWorkspace());
       router.push('/');
     }
-  };
-
-  const openLogoutDialog = (e: MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    setShowLogoutDialog(true);
-  };
-
-  const accountBase = accountId ? `/dashboard/${accountId}` : '/accounts';
-  const teamBase =
-    accountId && teamId ? `${accountBase}/${teamId}` : accountBase;
-
-  const buildTeamNavHref = (item: NavItem) => {
-    if (item.href) return item.href;
-    if (!accountId || !teamId) return '/accounts';
-    return item.segment === '' ? teamBase : `${teamBase}/${item.segment}`;
-  };
-
-  const buildAccountHref = (segment: string) => {
-    if (!accountId) return '/accounts';
-    return segment === '' ? accountBase : `${accountBase}/${segment}`;
-  };
-
-  const buildTeamHref = (team: Team) => {
-    return buildTeamSwitchHref(pathname, team.account_id, team.id);
-  };
-
-  const isTeamNavActive = (item: NavItem) => {
-    if (item.disabled) return false;
-    if (item.href) {
-      if (item.exact) return pathname === item.href;
-      return pathname === item.href || pathname.startsWith(`${item.href}/`);
-    }
-    if (!accountId || !teamId) return false;
-    if (item.segment === '') return pathname === teamBase;
-
-    if (item.children) {
-      return item.children.some((child) => isChildActive(child));
-    }
-
-    const href = `${teamBase}/${item.segment}`;
-    return pathname === href || pathname.startsWith(`${href}/`);
-  };
-
-  const isChildActive = (child: NavItem) => {
-    if (child.disabled) return false;
-    if (child.href) {
-      if (child.exact) return pathname === child.href;
-      return pathname === child.href || pathname.startsWith(`${child.href}/`);
-    }
-    if (!accountId || !teamId) return false;
-    const href = `${teamBase}/${child.segment}`;
-    return pathname === href || pathname.startsWith(`${href}/`);
-  };
-
-  const isTeamActive = (id: string) => urlTeamId === id;
-
-  const isProfileActive =
-    pathname === '/profile' || pathname.startsWith('/profile/');
-
-  const isAccountSettingsActive = pathname.startsWith(
-    `${accountBase}/settings`,
-  );
-
-  const renderAccountLogo = (
-    account: Account | null | undefined,
-    size: number = 28,
-  ) => {
-    const personal = (account?.type ?? '').includes('personal');
-    const FallbackIcon = personal ? Home : Building2;
-
-    return (
-      <span
-        style={{ width: size, height: size }}
-        className={cn(
-          'flex shrink-0 items-center justify-center overflow-hidden rounded-md',
-          personal
-            ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400'
-            : 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400',
-        )}
-      >
-        {account?.logo_url ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={account.logo_url}
-            alt={account.name}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <FallbackIcon style={{ width: size * 0.5, height: size * 0.5 }} />
-        )}
-      </span>
-    );
   };
 
   return (
-    <>
       <aside
-        onClick={(e: MouseEvent<HTMLElement>) => e.stopPropagation()}
-        className={cn(
-          'hidden md:flex md:flex-col bg-card/95 backdrop-blur-md transition-all duration-300 ease-in-out select-none shrink-0',
-          'fixed left-6 z-30 overflow-hidden',
-          'rounded-2xl border border-border/70 shadow-xl shadow-black/5',
-          collapsed ? 'w-[68px]' : 'w-[260px]',
-          'top-[140px] h-[calc(100vh-200px)]',
-        )}
-      >
-        <div
-          onClick={toggleSidebar}
-          className={cn(
-            'flex items-center h-12 flex-shrink-0 cursor-pointer border-b border-border/50 transition-colors hover:bg-accent/40',
-            collapsed ? 'justify-center px-2' : 'justify-between px-4',
-          )}
-        >
-          {!collapsed ? (
-            <>
-              <span className="text-xs font-semibold tracking-wider uppercase text-foreground/70 cursor-pointer">
-                Collapse Menu
-              </span>
-              <ChevronLeft className="h-4 w-4 text-foreground/70 hover:text-foreground transition-colors cursor-pointer" />
-            </>
-          ) : (
-            <ChevronRight className="h-4 w-4 text-foreground/70 hover:text-foreground transition-colors cursor-pointer" />
-          )}
-        </div>
-
-        <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none">
-          <nav className="px-3 py-3 space-y-0.5">
-            {visibleNavItems.map((item) => {
-              const isActive = isTeamNavActive(item);
-              const Icon = item.icon;
-              const isTrash = item.isTrash;
-              const isWorkspaces = item.segment === 'workspaces';
-              const showDivider = isWorkspaces;
-              const hasChildren = !!item.children && item.children.length > 0;
-              const isCertGroup = item.segment === 'certificates';
-              const childrenExpanded = isCertGroup && certificatesExpanded;
-
-              if (item.disabled) {
-                if (collapsed) {
-                  return (
-                    <div key={item.segment || item.label}>
-                      <div
-                        className="flex items-center justify-center h-10 w-10 mx-auto rounded-lg text-foreground/40 opacity-50 cursor-not-allowed group relative"
-                        title={`${item.label} (Coming Soon)`}
-                      >
-                        <Icon className="h-5 w-5 shrink-0" />
-                        <div className="absolute left-12 ml-2 px-2.5 py-1.5 bg-popover text-popover-foreground border border-border text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-md font-medium">
-                          {item.label} (Coming Soon)
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div key={item.segment || item.label}>
-                    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/40 opacity-50 cursor-not-allowed">
-                      <Icon className="h-[18px] w-[18px] shrink-0" />
-                      <span className="truncate flex-1">{item.label}</span>
-                      <span className="text-[10px] uppercase font-bold tracking-wider bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
-                        Soon
-                      </span>
-                    </div>
-                  </div>
-                );
-              }
-
-              if (collapsed) {
-                return (
-                  <div key={item.segment || item.label}>
-                    <Link
-                      href={buildTeamNavHref(item)}
-                      prefetch={false}
-                      className={cn(
-                        'flex items-center justify-center h-10 w-10 mx-auto rounded-lg transition-all duration-150 group relative cursor-pointer',
-                        isActive
-                          ? isTrash
-                            ? 'bg-destructive/15 text-destructive font-semibold'
-                            : 'bg-primary/15 text-primary font-semibold'
-                          : isTrash
-                            ? 'text-destructive hover:bg-destructive/10'
-                            : 'text-foreground/80 hover:bg-accent hover:text-foreground',
-                      )}
-                    >
-                      <Icon className="h-5 w-5 shrink-0" />
-                      <div className="absolute left-12 ml-2 px-2.5 py-1.5 bg-popover text-popover-foreground border border-border text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-md font-medium">
-                        {item.label}
-                      </div>
-                    </Link>
-                    {showDivider && (
-                      <div className="my-2 border-t border-border/40" />
-                    )}
-                  </div>
-                );
-              }
-
-              return (
-                <div key={item.segment || item.label}>
-                  {hasChildren ? (
-                    <div className="space-y-0.5">
-                      <div
-                        className={cn(
-                          'flex items-center gap-1 rounded-lg text-sm font-medium transition-all duration-150 group relative',
-                          isActive
-                            ? isTrash
-                              ? 'bg-destructive/15 text-destructive font-semibold'
-                              : 'bg-primary/15 text-primary font-semibold'
-                            : isTrash
-                              ? 'text-destructive hover:bg-destructive/10'
-                              : 'text-foreground/85 hover:bg-accent/70 hover:text-foreground',
-                        )}
-                      >
-                        {isActive && (
-                          <div
-                            className={cn(
-                              'absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full',
-                              isTrash ? 'bg-destructive' : 'bg-primary',
-                            )}
-                          />
-                        )}
-
-                        <Link
-                          href={buildTeamNavHref(item)}
-                          prefetch={false}
-                          className="flex flex-1 items-center gap-3 px-3 py-2.5 cursor-pointer truncate"
-                        >
-                          <Icon
-                            className={cn(
-                              'h-[18px] w-[18px] shrink-0 transition-colors',
-                              isTrash
-                                ? 'text-destructive'
-                                : isActive
-                                  ? 'text-primary'
-                                  : 'text-foreground/70 group-hover:text-foreground',
-                            )}
-                          />
-                          <span className="truncate">{item.label}</span>
-                        </Link>
-
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (isCertGroup)
-                              setCertificatesExpanded((v) => !v);
-                          }}
-                          className="pr-3 py-2.5 cursor-pointer hover:text-primary transition-colors"
-                        >
-                          <ChevronDown
-                            className={cn(
-                              'h-4 w-4 shrink-0 transition-transform',
-                              childrenExpanded
-                                ? 'rotate-180 text-primary'
-                                : 'text-foreground/60',
-                            )}
-                          />
-                        </button>
-                      </div>
-
-                      {childrenExpanded && (
-                        <div className="mt-1 ml-4 pl-3 border-l border-border/40 space-y-0.5">
-                          {item.children!.map((child) => {
-                            const ChildIcon = child.icon;
-                            const childActive = isChildActive(child);
-                            return (
-                              <Link
-                                key={child.label}
-                                href={buildTeamNavHref(child)}
-                                prefetch={false}
-                                className={cn(
-                                  'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all cursor-pointer',
-                                  childActive
-                                    ? 'bg-primary/10 text-primary font-semibold'
-                                    : 'text-foreground/75 hover:bg-accent/60 hover:text-foreground',
-                                )}
-                              >
-                                <ChildIcon className="h-[16px] w-[16px] shrink-0" />
-                                <span className="truncate">{child.label}</span>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <Link
-                      href={buildTeamNavHref(item)}
-                      prefetch={false}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group relative cursor-pointer',
-                        isActive
-                          ? isTrash
-                            ? 'bg-destructive/15 text-destructive font-semibold'
-                            : 'bg-primary/15 text-primary font-semibold'
-                          : isTrash
-                            ? 'text-destructive hover:bg-destructive/10'
-                            : 'text-foreground/85 hover:bg-accent/70 hover:text-foreground',
-                      )}
-                    >
-                      {isActive && (
-                        <div
-                          className={cn(
-                            'absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full',
-                            isTrash ? 'bg-destructive' : 'bg-primary',
-                          )}
-                        />
-                      )}
-                      <Icon
-                        className={cn(
-                          'h-[18px] w-[18px] shrink-0 transition-colors',
-                          isTrash
-                            ? 'text-destructive'
-                            : isActive
-                              ? 'text-primary'
-                              : 'text-foreground/70 group-hover:text-foreground',
-                        )}
-                      />
-                      <span className="truncate">{item.label}</span>
-                    </Link>
-                  )}
-                  {showDivider && (
-                    <div className="my-2 border-t border-border/40" />
-                  )}
-                </div>
-              );
-            })}
-          </nav>
-
-          {accountId && (
-            <>
-              <div className="border-t border-border/50" />
-              {!collapsed && (
-                <div className="py-3 px-3">
-                  <button
-                    type="button"
-                    onClick={() => setTeamsExpanded((v) => !v)}
-                    className={cn(
-                      'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all cursor-pointer',
-                      teamsExpanded
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-foreground/85 hover:bg-accent/70 hover:text-foreground',
-                    )}
-                  >
-                    <Users
-                      className={cn(
-                        'h-[18px] w-[18px] shrink-0',
-                        teamsExpanded ? 'text-primary' : 'text-foreground/70',
-                      )}
-                    />
-                    <span className="flex-1">Teams</span>
-                    {teams.length > 0 && (
-                      <span
-                        className={cn(
-                          'flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold',
-                          teamsExpanded
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-primary/10 text-primary',
-                        )}
-                      >
-                        {teams.length}
-                      </span>
-                    )}
-                    <ChevronDown
-                      className={cn(
-                        'h-4 w-4 shrink-0 transition-transform',
-                        teamsExpanded
-                          ? 'rotate-180 text-primary'
-                          : 'text-foreground/60',
-                      )}
-                    />
-                  </button>
-
-                  {teamsExpanded && (
-                    <div className="mt-2 rounded-xl border border-primary/20 bg-primary/5 p-2.5">
-                      {teams.length === 0 ? (
-                        <p className="px-2 py-2 text-xs text-muted-foreground">
-                          No teams yet
-                        </p>
-                      ) : (
-                        <div
-                          role="radiogroup"
-                          aria-label="Your teams"
-                          className="space-y-0.5"
-                        >
-                          {teams.map((team) => {
-                            const isActive = isTeamActive(team.id);
-                            const teamAccount = accountById.get(team.account_id);
-                            const label = teamAccount
-                              ? accountLabel(teamAccount)
-                              : 'Unknown Account';
-                            return (
-                              <Link
-                                key={team.id}
-                                href={buildTeamHref(team)}
-                                className={cn(
-                                  'relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-all cursor-pointer',
-                                  isActive
-                                    ? 'bg-primary/10 text-primary font-semibold ring-1 ring-primary/30'
-                                    : 'text-foreground/80 hover:bg-accent/60 hover:text-foreground',
-                                )}
-                              >
-                                {isActive && (
-                                  <span
-                                    aria-hidden
-                                    className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-primary"
-                                  />
-                                )}
-                                {renderAccountLogo(teamAccount, 24)}
-                                <span className="min-w-0 flex-1">
-                                  <span className="block truncate">
-                                    {team.display_name || team.name}
-                                  </span>
-                                  <span
-                                    className={cn(
-                                      'block truncate text-xs',
-                                      isActive
-                                        ? 'text-primary/70'
-                                        : 'text-muted-foreground',
-                                    )}
-                                  >
-                                    {label}
-                                  </span>
-                                </span>
-                                {isActive && (
-                                  <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
-                                )}
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      <div className="mt-2 border-t border-primary/15 pt-2 space-y-0.5">
-                        {teamId && (
-                          <Link
-                            href={`${teamBase}/settings`}
-                            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium text-primary hover:bg-primary/10 transition-colors cursor-pointer"
-                          >
-                            <Settings className="h-4 w-4 shrink-0" />
-                            <span>Team settings</span>
-                          </Link>
-                        )}
-                        {teamId && (
-                          <button
-                            type="button"
-                            onClick={() => setInviteOpen(true)}
-                            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium text-primary hover:bg-primary/10 transition-colors cursor-pointer"
-                          >
-                            <UserPlus className="h-4 w-4 shrink-0" />
-                            <span>Invite member</span>
-                          </button>
-                        )}
-                        <Link
-                          href={`${accountBase}/teams/new`}
-                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium text-primary hover:bg-primary/10 transition-colors cursor-pointer"
-                        >
-                          <Plus className="h-4 w-4 shrink-0" />
-                          <span>New team</span>
-                        </Link>
-                        <Link
-                          href="/accounts"
-                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium text-primary hover:bg-primary/10 transition-colors cursor-pointer"
-                        >
-                          <LayoutDashboard className="h-4 w-4 shrink-0" />
-                          <span>Manage teams</span>
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {collapsed && (
-                <div className="py-3 px-2">
-                  <button
-                    type="button"
-                    onClick={toggleSidebar}
-                    className={cn(
-                      'flex items-center justify-center h-10 w-10 mx-auto rounded-lg transition-all cursor-pointer group relative',
-                      'text-foreground/80 hover:bg-accent hover:text-foreground',
-                    )}
-                    title="Teams"
-                  >
-                    <Users className="h-5 w-5 shrink-0" />
-                    <div className="absolute left-12 ml-2 px-2.5 py-1.5 bg-popover text-popover-foreground border border-border text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-md font-medium">
-                      Teams
-                    </div>
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-
-          <div className="border-t border-border/50" />
-          <div className={cn('py-3 space-y-0.5', collapsed ? 'px-2' : 'px-3')}>
-            {accountId && (
-              <Link
-                href={buildAccountHref('settings')}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg transition-all cursor-pointer',
-                  collapsed
-                    ? 'h-10 w-10 mx-auto justify-center'
-                    : 'px-3 py-2.5',
-                  isAccountSettingsActive
-                    ? 'bg-primary/15 text-primary font-semibold'
-                    : 'text-foreground/85 hover:bg-accent/70 hover:text-foreground',
-                )}
-              >
-                <Settings className="h-[18px] w-[18px] shrink-0" />
-                {!collapsed && (
-                  <span className="text-sm font-medium">
-                    Account Settings
-                  </span>
-                )}
-              </Link>
-            )}
-
-            <Link
-              href="/profile"
-              className={cn(
-                'flex items-center gap-3 rounded-lg transition-all cursor-pointer',
-                collapsed ? 'h-10 w-10 mx-auto justify-center' : 'px-3 py-2.5',
-                isProfileActive
-                  ? 'bg-primary/15 text-primary font-semibold'
-                  : 'text-foreground/85 hover:bg-accent/70 hover:text-foreground',
-              )}
-            >
-              <User className="h-[18px] w-[18px] shrink-0" />
-              {!collapsed && (
-                <span className="text-sm font-medium">My Profile</span>
-              )}
-            </Link>
-
-            <button
-              type="button"
-              onClick={openLogoutDialog}
-              className={cn(
-                'flex items-center gap-3 rounded-lg transition-all duration-150 w-full cursor-pointer',
-                collapsed ? 'h-10 w-10 mx-auto justify-center' : 'px-3 py-2.5',
-                'text-destructive hover:bg-destructive/10 active:scale-[0.98]',
-              )}
-            >
-              <LogOut className="h-[18px] w-[18px] shrink-0 text-destructive" />
-              {!collapsed && (
-                <span className="text-sm font-semibold">Sign out</span>
-              )}
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      <LogoutDialog
-        open={showLogoutDialog}
-        onOpenChange={setShowLogoutDialog}
-        onConfirm={handleLogoutConfirm}
-        isLoading={isLoading}
+      className={cn(
+        'hidden lg:flex flex-col w-64 shrink-0 overflow-hidden',
+        // Machined chassis plate
+        'bg-[linear-gradient(180deg,#1E2226_0%,#15181A_55%,#0D0F11_100%)]',
+        // Bevelled right edge (light catch, then a dark gap) + shadow cast onto the page
+        'shadow-[inset_0_1px_0_rgba(255,255,255,0.07),inset_-1px_0_0_rgba(255,255,255,0.05),inset_-2px_0_0_rgba(0,0,0,0.85),8px_0_18px_rgba(0,0,0,0.35)]'
+      )}
+    >
+      {/* Fixed overlays: they stay put even if the list scrolls */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.09] mix-blend-overlay"
+        style={{ backgroundImage: NOISE, backgroundSize: '140px 140px' }}
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'linear-gradient(115deg, rgba(255,255,255,0.05) 0%, transparent 38%)',
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-px"
+        style={{
+          background:
+            'linear-gradient(90deg, transparent, rgba(20,184,122,0.45) 30%, rgba(232,163,61,0.25) 70%, transparent)',
+        }}
+        aria-hidden="true"
       />
 
-      {teamId && (
-        <InviteMemberDialog
-          open={inviteOpen}
-          onOpenChange={setInviteOpen}
-          teamId={teamId}
+            {/* Scrollable content */}
+      <div className="relative flex-1 overflow-y-auto px-3 pb-6 pt-6">
+        {/* Engraved header strip with screws */}
+        <div className="mb-3 flex items-center justify-between px-1 pt-1">
+          <Screw angle={35} />
+          <span
+            className="text-[10px] font-bold uppercase tracking-[0.28em] text-text-muted"
+            style={{ textShadow: ENGRAVE }}
+          >
+            Dashboard
+          </span>
+          <Screw angle={-60} />
+        </div>
+
+        <nav className="space-y-2.5" aria-label="Dashboard">
+          {NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.href;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={isActive ? 'page' : undefined}
+                className={cn(KEY_BASE, isActive ? KEY_ACTIVE : KEY_IDLE)}
+              >
+                {/* Gloss on the top half of idle keys */}
+                {!isActive && (
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-[2px] top-[1px] h-1/2 rounded-t-[10px] bg-gradient-to-b from-white/[0.07] to-transparent"
+                  />
+                )}
+
+                {/* Lit indicator bar on the pressed key */}
+                {isActive && (
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full"
+                    style={{
+                      background: 'rgba(20,184,122,0.95)',
+                      boxShadow: '0 0 10px 2px rgba(20,184,122,0.55)',
+                    }}
+                  />
+                )}
+
+                <IconSocket active={isActive}>
+                  <Icon
+                    className="h-[18px] w-[18px] transition-transform duration-200 group-hover:scale-110"
+                    strokeWidth={isActive ? 2.5 : 2}
+                    style={{
+                      filter: isActive
+                        ? 'drop-shadow(0 0 4px rgba(20,184,122,0.7))'
+                        : 'drop-shadow(0 1px 0 rgba(0,0,0,0.6))',
+                    }}
+                  />
+                </IconSocket>
+
+                <span className="relative z-10" style={{ textShadow: ENGRAVE }}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Engraved groove separating navigation from the account action */}
+        <div
+          className="mx-1 my-5 h-px bg-black/80"
+          style={{ boxShadow: '0 1px 0 rgba(255,255,255,0.07)' }}
+          aria-hidden="true"
         />
-      )}
-    </>
+
+        {/* Log out sits right under the nav, not at the far end of the panel */}
+        <button
+          type="button"
+          onClick={handleLogout}
+          className={cn(KEY_BASE, KEY_DANGER)}
+        >
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-[2px] top-[1px] h-1/2 rounded-t-[10px] bg-gradient-to-b from-white/[0.06] to-transparent"
+          />
+          <IconSocket tone="danger">
+            <LogOut
+              className="h-[18px] w-[18px]"
+              strokeWidth={2}
+              style={{ filter: 'drop-shadow(0 0 4px rgba(248,113,113,0.4))' }}
+            />
+          </IconSocket>
+          <span className="relative z-10" style={{ textShadow: ENGRAVE }}>
+            Log Out
+          </span>
+        </button>
+      </div>
+    </aside>
   );
 }

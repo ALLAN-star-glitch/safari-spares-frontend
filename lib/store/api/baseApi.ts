@@ -28,30 +28,11 @@ export const api = createApi({
     return undefined;
   },
   tagTypes: [
-    'User',
     'Auth',
-    'Profile',          // <-- NEW
-    'Events',
-    'EventTypes',
-    'EventStatuses',
-    'TrashCount',
-    'Memberships',
-    'Teams',
-    'Invitations',
-    'EventCategories',
-    'TicketTypes',
-    'Registrations',
-    'Waitlist',
-    'Orders',
-    'Payments',
-    'VideoConnections',
-    'Event',
-    'Attendance',
-    'VideoMeeting',
-    'SessionRoster',
-    'Teams',
-    'Certificates',          // ← NEW
-    'CertificateTemplates',  // ← NEW
+    'User',
+    'Account',
+    // Add future tags here as you build out the app:
+    // 'Shop', 'Listing', 'Reservation', 'Chat'
   ],
   endpoints: () => ({}),
 });

@@ -16,65 +16,36 @@ import storage from 'redux-persist/lib/storage';
 import { api } from './api/baseApi';
 import authReducer from './slices/authSlice';
 import themeReducer from './slices/themeSlice';
-import workspaceReducer from './slices/workspaceSlice';
 
 // ============================================================
-// SIDE-EFFECT IMPORTS
-//
-// These register each module's endpoints with the shared `api`
-// instance. Without these lines the corresponding hooks throw
-// at runtime ("useXQuery is not a function").
+// SIDE-EFFECT IMPORTS (Register endpoints)
 // ============================================================
 import './api/authApi';
-import './api/accountsApi';
-import './api/teamsApi';
-import './api/profileApi';
-import './api/attendanceApi';  
-import './api/registrationsApi';
-import './api/paymentsApi';
-import './api/videoApi';
-import './api/certificatesApi';
-// Add any remaining API modules you have in lib/store/api/.
+import './api/userApi';
+import './api/accountApi';
 
 // ============================================================
-// AUTH PERSISTENCE
-// ============================================================
-
-const authPersistConfig = {
-  key: 'auth',
-  storage,
-  whitelist: ['user', 'memberships', 'activeAccountId', 'isAuthenticated'],
-};
-
-const persistedAuthReducer = persistReducer(authPersistConfig, authReducer);
-
-// ============================================================
-// WORKSPACE PERSISTENCE
+// PERSISTENCE
 //
-// The workspace slice holds the "last used" account + team so the
-// /dashboard stub can route a returning user straight into their
-// real dashboard.
+// Only the theme is persisted. Auth is NEVER persisted — the
+// session lives in HttpOnly cookies and is verified via /auth/me
+// on every app load.
 // ============================================================
 
-const workspacePersistConfig = {
-  key: 'workspace',
+const themePersistConfig = {
+  key: 'theme',
   storage,
-  whitelist: ['activeAccountId', 'activeTeamId'],
 };
 
-const persistedWorkspaceReducer = persistReducer(
-  workspacePersistConfig,
-  workspaceReducer,
-);
+const persistedThemeReducer = persistReducer(themePersistConfig, themeReducer);
 
 // ============================================================
 // ROOT REDUCER
 // ============================================================
 
 const rootReducer = combineReducers({
-  auth: persistedAuthReducer,
-  theme: themeReducer,
-  workspace: persistedWorkspaceReducer,
+  auth: authReducer, // NOT persisted
+  theme: persistedThemeReducer,
   [api.reducerPath]: api.reducer,
 });
 
