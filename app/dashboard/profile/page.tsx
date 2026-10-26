@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   useGetMyProfileQuery,
   useUpdateProfileMutation,
@@ -29,11 +29,15 @@ export default function ProfileSettingsPage() {
   
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  
-  if (profile?.data && firstName === '' && lastName === '') {
-    setFirstName(profile.data.first_name);
-    setLastName(profile.data.last_name);
-  }
+
+  // FIXED: Wrapped state initialization in useEffect to prevent render phase state updates
+  useEffect(() => {
+    if (profile?.data && firstName === '' && lastName === '') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFirstName(profile.data.first_name);
+      setLastName(profile.data.last_name);
+    }
+  }, [profile, firstName, lastName]);
 
   if (loadingProfile || loadingAccount) {
     return <ProfileSkeleton />;
@@ -76,7 +80,8 @@ export default function ProfileSettingsPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-4xl">
+    // FIXED: Removed max-w-4xl and added w-full to fill the remaining dashboard space evenly
+    <div className="space-y-8 w-full">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Profile Settings</h1>
         <p className="text-sm text-text-secondary mt-1">

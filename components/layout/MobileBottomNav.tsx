@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Home, Search, MessageSquare, User, Plus, Store, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserProfileSheet } from './UserProfileSheet';
@@ -16,6 +16,8 @@ import {
   SheetTitle,
   SheetClose,
 } from '@/components/ui/sheet';
+import { useAppSelector } from '@/lib/store/hooks';
+import { useGetMyAccountQuery } from '@/lib/store/api/accountApi';
 
 /* Recessed Phillips-style screw head */
 function Screw({ className, angle }: { className: string; angle: number }) {
@@ -54,12 +56,30 @@ const KEYCAP_PRIMARY_CIRCLE =
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
+
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { data: accountData } = useGetMyAccountQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+
+  const account = accountData?.data;
+  const isSeller = account?.roles.includes('seller');
+  const isMechanic = account?.roles.includes('mechanic');
 
   if (pathname?.startsWith('/signin') || pathname?.startsWith('/signup')) {
     return null;
   }
+
+  const handlePlusClick = () => {
+    if (isSeller) {
+      router.push('/dashboard/inventory/new');
+    } else {
+      setIsActionSheetOpen(true);
+    }
+  };
 
   const renderNavItem = (item: { label: string; href: string; icon: any }) => {
     const isActive = pathname === item.href;
@@ -122,9 +142,9 @@ export function MobileBottomNav() {
               <div aria-hidden="true" className="absolute -top-2 h-6 w-12 rounded-[50%] bg-black/60 blur-md" />
               
               <button 
-                onClick={() => setIsActionSheetOpen(true)} 
+                onClick={handlePlusClick} 
                 className={KEYCAP_PRIMARY_CIRCLE} 
-                aria-label="Open action menu"
+                aria-label={isSeller ? 'Create listing' : 'Open action menu'}
               >
                 <span aria-hidden="true" className="pointer-events-none absolute inset-x-[3px] top-[2px] h-1/2 rounded-t-full bg-gradient-to-b from-white/35 to-transparent" />
                 <Plus className="relative h-7 w-7" strokeWidth={3} style={{
@@ -165,17 +185,15 @@ export function MobileBottomNav() {
         </div>
       </div>
 
-      {/* Action Menu Sheet */}
+      {/* Action Menu Sheet — shown only if user is NOT a seller */}
       <Sheet open={isActionSheetOpen} onOpenChange={setIsActionSheetOpen}>
         <SheetContent
           side="bottom"
           className={cn(
-            // Added bg-charcoal and z-[100] to ensure it's visible and opaque
             'z-[100] bg-charcoal border border-border-subtle rounded-[32px] p-6 pb-10 flex flex-col items-center mb-2 mx-auto w-[calc(100%-16px)] max-w-md',
             'shadow-[inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-1px_0_rgba(0,0,0,0.9),0_-12px_28px_rgba(0,0,0,0.6)]'
           )}
         >
-          {/* Required by Radix for screen readers */}
           <SheetTitle className="sr-only">Seller Actions</SheetTitle>
 
           {/* Corner screws */}
@@ -226,38 +244,42 @@ export function MobileBottomNav() {
           </SheetHeader>
 
           <div className="relative z-10 w-full space-y-3">
-            <SheetClose asChild>
-              <Link href="/apply/shop" className="w-full block">
-                <span className={cn(
-                  'group/btn relative inline-flex w-full items-center justify-center rounded-full h-12 px-6 select-none outline-none',
-                  'text-primary-foreground font-semibold text-base transition-[transform,box-shadow,filter] duration-150 ease-out',
-                  'bg-[linear-gradient(180deg,#3FDBA0_0%,#14B87A_46%,#0E9A64_100%)]',
-                  'shadow-[inset_0_1px_0_rgba(255,255,255,0.55),inset_0_-3px_4px_rgba(0,0,0,0.22),0_0_0_1px_rgba(5,60,40,0.9),0_4px_0_#0A6B49,0_12px_22px_rgba(20,184,122,0.30)]',
-                  'hover:-translate-y-px hover:brightness-110 active:translate-y-[3px]',
-                  'active:shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-2px_3px_rgba(0,0,0,0.25),0_0_0_1px_rgba(5,60,40,0.9),0_1px_0_#0A6B49,0_4px_8px_rgba(20,184,122,0.25)]'
-                )}>
-                  <span aria-hidden="true" className="pointer-events-none absolute inset-x-[3px] top-[2px] h-1/2 rounded-t-full bg-gradient-to-b from-white/30 to-transparent" />
-                  <span className="relative" style={{ textShadow: PRIMARY_TEXT_SHADOW }}>Apply as a Shop</span>
-                </span>
-              </Link>
-            </SheetClose>
+            {!isSeller && (
+              <SheetClose asChild>
+                <Link href="/apply/shop" className="w-full block">
+                  <span className={cn(
+                    'group/btn relative inline-flex w-full items-center justify-center rounded-full h-12 px-6 select-none outline-none',
+                    'text-primary-foreground font-semibold text-base transition-[transform,box-shadow,filter] duration-150 ease-out',
+                    'bg-[linear-gradient(180deg,#3FDBA0_0%,#14B87A_46%,#0E9A64_100%)]',
+                    'shadow-[inset_0_1px_0_rgba(255,255,255,0.55),inset_0_-3px_4px_rgba(0,0,0,0.22),0_0_0_1px_rgba(5,60,40,0.9),0_4px_0_#0A6B49,0_12px_22px_rgba(20,184,122,0.30)]',
+                    'hover:-translate-y-px hover:brightness-110 active:translate-y-[3px]',
+                    'active:shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-2px_3px_rgba(0,0,0,0.25),0_0_0_1px_rgba(5,60,40,0.9),0_1px_0_#0A6B49,0_4px_8px_rgba(20,184,122,0.25)]'
+                  )}>
+                    <span aria-hidden="true" className="pointer-events-none absolute inset-x-[3px] top-[2px] h-1/2 rounded-t-full bg-gradient-to-b from-white/30 to-transparent" />
+                    <span className="relative" style={{ textShadow: PRIMARY_TEXT_SHADOW }}>Open a Shop</span>
+                  </span>
+                </Link>
+              </SheetClose>
+            )}
 
-            <SheetClose asChild>
-              <Link href="/apply/mechanic" className="w-full block">
-                <span className={cn(
-                  'group/btn relative inline-flex w-full items-center justify-center rounded-full h-12 px-6 select-none outline-none',
-                  'text-primary font-semibold text-base transition-[transform,box-shadow,filter] duration-150 ease-out',
-                  'bg-[linear-gradient(180deg,#23272B_0%,#181B1E_48%,#0F1113_100%)]',
-                  'shadow-[inset_0_1px_0_rgba(255,255,255,0.14),inset_0_-3px_4px_rgba(0,0,0,0.5),0_0_0_1px_rgba(20,184,122,0.45),0_4px_0_#07080A,0_12px_20px_rgba(0,0,0,0.5)]',
-                  'hover:-translate-y-px hover:brightness-125 active:translate-y-[3px]',
-                  'active:shadow-[inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-2px_3px_rgba(0,0,0,0.55),0_0_0_1px_rgba(20,184,122,0.45),0_1px_0_#07080A,0_4px_8px_rgba(0,0,0,0.5)]'
-                )}>
-                  <span aria-hidden="true" className="pointer-events-none absolute inset-x-[3px] top-[2px] h-1/2 rounded-t-full bg-gradient-to-b from-white/10 to-transparent" />
-                  <Wrench className="relative h-4 w-4 mr-2" style={{ filter: 'drop-shadow(0 0 4px rgba(20,184,122,0.4))' }} />
-                  <span className="relative" style={{ textShadow: ENGRAVE_TEXT_SHADOW }}>Apply as a Mechanic</span>
-                </span>
-              </Link>
-            </SheetClose>
+            {!isMechanic && (
+              <SheetClose asChild>
+                <Link href="/apply/mechanic" className="w-full block">
+                  <span className={cn(
+                    'group/btn relative inline-flex w-full items-center justify-center rounded-full h-12 px-6 select-none outline-none',
+                    'text-primary font-semibold text-base transition-[transform,box-shadow,filter] duration-150 ease-out',
+                    'bg-[linear-gradient(180deg,#23272B_0%,#181B1E_48%,#0F1113_100%)]',
+                    'shadow-[inset_0_1px_0_rgba(255,255,255,0.14),inset_0_-3px_4px_rgba(0,0,0,0.5),0_0_0_1px_rgba(20,184,122,0.45),0_4px_0_#07080A,0_12px_20px_rgba(0,0,0,0.5)]',
+                    'hover:-translate-y-px hover:brightness-125 active:translate-y-[3px]',
+                    'active:shadow-[inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-2px_3px_rgba(0,0,0,0.55),0_0_0_1px_rgba(20,184,122,0.45),0_1px_0_#07080A,0_4px_8px_rgba(0,0,0,0.5)]'
+                  )}>
+                    <span aria-hidden="true" className="pointer-events-none absolute inset-x-[3px] top-[2px] h-1/2 rounded-t-full bg-gradient-to-b from-white/10 to-transparent" />
+                    <Wrench className="relative h-4 w-4 mr-2" style={{ filter: 'drop-shadow(0 0 4px rgba(20,184,122,0.4))' }} />
+                    <span className="relative" style={{ textShadow: ENGRAVE_TEXT_SHADOW }}>Become a Mechanic</span>
+                  </span>
+                </Link>
+              </SheetClose>
+            )}
           </div>
 
           <SheetClose asChild>
