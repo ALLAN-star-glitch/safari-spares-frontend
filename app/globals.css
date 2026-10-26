@@ -312,3 +312,15 @@ textarea:disabled {
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* Hide the page title when scrolling down */
+@media (min-width: 1024px) {
+  .sticky-header-container {
+    transition: all 0.2s ease;
+  }
+  
+  /* When the container is stuck to the top, hide the main title */
+  .sticky-header-container:has(.category-strip-wrapper) {
+    /* This trick uses a scroll listener via JS in the component to toggle opacity */
+  }
+}
